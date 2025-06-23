@@ -5,12 +5,16 @@ const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-
 // The base URL of the Gemini API used to generate content (for text-based responses).
 
 const chatMessages = document.getElementById('chat-messages');
-// Gets the DOM element with the ID 'chat-messages', where the chat messages (user and bot) will be displayed.
-
 const userInput = document.getElementById('user-input');
-// Gets the DOM element with the ID 'user-input', which is the input field where the user types their message.
-
 const sendButton = document.getElementById('send-button');
+
+// Check for missing DOM elements
+if (!chatMessages || !userInput || !sendButton) {
+    alert('Chatbot UI failed to load. Please check HTML structure.');
+    throw new Error('Missing required DOM elements');
+}
+// Gets the DOM element with the ID 'chat-messages', where the chat messages (user and bot) will be displayed.
+// Gets the DOM element with the ID 'user-input', which is the input field where the user types their message.
 // Gets the DOM element with the ID 'send-button', which is the button the user clicks to send their message.
 
 async function generateResponse(prompt) {
@@ -85,8 +89,10 @@ function addMessage(message, isUser) {
 
     profileImage.src = isUser ? 'user.jpg' : 'bot.jpg';
     // Sets the image source depending on whether it's a user or bot message ('user.jpg' or 'bot.jpg').
-
-    profileImage.alt = isUser ? 'User' : 'Bot';
+    // If images are missing, show a fallback
+    profileImage.onerror = function() {
+        this.style.display = 'none';
+    };
     // Sets the alternate text for the image (for accessibility), either 'User' or 'Bot'.
 
     const messageContent = document.createElement('div');

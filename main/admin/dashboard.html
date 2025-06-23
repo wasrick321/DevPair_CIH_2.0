@@ -1,0 +1,281 @@
+<!-- /main/user_site/dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - GenGuard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen p-6">
+  <div class="max-w-7xl mx-auto space-y-8">
+    <header class="flex justify-between items-center">
+      <h1 class="text-3xl font-bold text-blue-700">🏥 Hospital Dashboard - Admin</h1>
+      <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">Logout</button>
+    </header>
+
+    <!-- Add Patient Section -->
+    <section class="bg-white p-6 rounded-lg shadow-lg">
+      <h2 class="text-xl font-semibold mb-4">➕ Add Patient Record</h2>
+      <form id="patient-form" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <input type="text" id="name" name="name" placeholder="Patient Name" required class="p-2 border rounded">
+        <input type="text" id="patientId" name="patientId" placeholder="Patient ID" required class="p-2 border rounded">
+        <input type="number" id="age" name="age" placeholder="Patient Age" required class="p-2 border rounded">
+        <input type="file" id="csv" name="csv" accept=".csv" required class="md:col-span-3 p-2 border rounded">
+        <div class="md:col-span-3">
+          <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">Add Patient</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Patient Records Section -->
+    <section class="bg-white p-6 rounded-lg shadow-lg">
+      <h2 class="text-xl font-semibold mb-4">📋 Patient Records</h2>
+      <button onclick="loadPatients()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg mb-4">Refresh Records</button>
+      <div id="patients-container" class="overflow-x-auto">
+        <div class="text-center text-gray-500 py-8">Click "Refresh Records" to load patient data</div>
+      </div>
+    </section>
+
+    <!-- Multi-Patient CSV Analysis Section -->
+    <section class="bg-white p-6 rounded-lg shadow-lg">
+      <h2 class="text-xl font-semibold mb-4">📂 Upload Multi-Patient Mutation CSV</h2>
+      <input type="file" id="multiPatientCsv" accept=".csv" class="mb-4">
+      <button onclick="uploadMultiPatientCsv()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg mb-4">Upload & Analyze</button>
+      <a href="/data/sample_multi_patient.csv" download class="ml-4 text-blue-600 underline">Download Sample CSV</a>
+      <div id="multi-patient-table-container" class="overflow-x-auto mt-6"></div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script>
+    // Load patients on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      loadPatients();
+    });
+
+    const patientForm = document.getElementById('patient-form');
+
+    patientForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = patientForm.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = 'Adding...';
+      submitBtn.disabled = true;
+
+      try {
+        const formData = new FormData(patientForm);
+        const response = await fetch('/api/patient', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+          alert('✅ ' + result.message);
+          patientForm.reset();
+          loadPatients(); // Refresh the patient list
+        } else {
+          alert('❌ ' + result.error);
+        }
+      } catch (error) {
+        alert('❌ Error: ' + error.message);
+      } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+      }
+    });
+
+    async function loadPatients() {
+      try {
+        const response = await fetch('/api/patients');
+        const patients = await response.json();
+        
+        const container = document.getElementById('patients-container');
+        
+        if (patients.length === 0) {
+          container.innerHTML = '<div class="text-center text-gray-500 py-8">No patients found</div>';
+          return;
+        }
+
+        let html = `
+          <table class="min-w-full border-collapse border border-gray-300">
+            <thead>
+              <tr class="bg-blue-100">
+                <th class="border border-gray-300 px-4 py-2">Name</th>
+                <th class="border border-gray-300 px-4 py-2">Patient ID</th>
+                <th class="border border-gray-300 px-4 py-2">Age</th>
+                <th class="border border-gray-300 px-4 py-2">CSV File</th>
+                <th class="border border-gray-300 px-4 py-2">Added Date</th>
+                <th class="border border-gray-300 px-4 py-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        patients.forEach(patient => {
+          const date = new Date(patient.createdAt).toLocaleDateString();
+          html += `
+            <tr class="hover:bg-gray-50">
+              <td class="border border-gray-300 px-4 py-2">${patient.name}</td>
+              <td class="border border-gray-300 px-4 py-2">${patient.patientId}</td>
+              <td class="border border-gray-300 px-4 py-2">${patient.age}</td>
+              <td class="border border-gray-300 px-4 py-2">
+                <a href="/${patient.csvFile}" target="_blank" class="text-blue-600 hover:underline">${patient.csvFile.split('/').pop()}</a>
+              </td>
+              <td class="border border-gray-300 px-4 py-2">${date}</td>
+              <td class="border border-gray-300 px-4 py-2">
+                <button onclick="deletePatient('${patient._id}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm">Delete</button>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (error) {
+        console.error('Error loading patients:', error);
+        document.getElementById('patients-container').innerHTML = 
+          '<div class="text-center text-red-500 py-8">Error loading patients</div>';
+      }
+    }
+
+    async function deletePatient(patientId) {
+      if (!confirm('Are you sure you want to delete this patient?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/patient/${patientId}`, {
+          method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+          alert('✅ ' + result.message);
+          loadPatients(); // Refresh the list
+        } else {
+          alert('❌ ' + result.error);
+        }
+      } catch (error) {
+        alert('❌ Error: ' + error.message);
+      }
+    }
+
+    function logout() {
+      window.location.href = '/';
+    }
+
+    let multiPatientData = {};
+    let allMutations = [];
+
+    function uploadMultiPatientCsv() {
+      const fileInput = document.getElementById('multiPatientCsv');
+      const file = fileInput.files[0];
+      if (!file) return alert('Please select a CSV file.');
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          if (!results.data || results.data.length === 0 || Object.keys(results.data[0]).length === 1) {
+            document.getElementById('multi-patient-table-container').innerHTML = '<div class="text-center text-red-500 py-4">Invalid or empty CSV file.</div>';
+            return;
+          }
+          // Check for required columns
+          const requiredCols = ['UserID', 'Gene', 'Mutation'];
+          const hasAllCols = requiredCols.every(col => Object.keys(results.data[0]).includes(col));
+          if (!hasAllCols) {
+            document.getElementById('multi-patient-table-container').innerHTML = '<div class="text-center text-red-500 py-4">CSV must have columns: UserID, Gene, Mutation.</div>';
+            return;
+          }
+          processMultiPatientData(results.data);
+        },
+        error: function(error) {
+          alert('Error parsing CSV: ' + error.message);
+        }
+      });
+    }
+
+    function processMultiPatientData(rows) {
+      multiPatientData = {};
+      allMutations = [];
+      
+      rows.forEach(row => {
+        const userId = row.UserID?.trim();
+        const gene = row.Gene?.trim();
+        const mutation = row.Mutation?.trim();
+        
+        if (!userId || !gene || !mutation) return;
+        
+        if (!multiPatientData[userId]) multiPatientData[userId] = [];
+        multiPatientData[userId].push({ gene, mutation });
+        allMutations.push(`${gene}|${mutation}`);
+      });
+      
+      allMutations = [...new Set(allMutations)];
+      localStorage.setItem('multiPatientData', JSON.stringify(multiPatientData));
+      renderMultiPatientTable();
+    }
+
+    function renderMultiPatientTable() {
+      const container = document.getElementById('multi-patient-table-container');
+      
+      if (!Object.keys(multiPatientData).length) {
+        container.innerHTML = '<div class="text-center text-gray-500 py-4">No data to display</div>';
+        return;
+      }
+      
+      let html = `
+        <div class="mb-4">
+          <h3 class="text-lg font-semibold mb-2">Mutation Analysis Results</h3>
+          <p class="text-sm text-gray-600">Found ${Object.keys(multiPatientData).length} patients with ${allMutations.length} unique mutations</p>
+        </div>
+        <table class="min-w-full border-collapse border border-gray-300">
+          <thead>
+            <tr>
+              <th class="border border-gray-300 px-4 py-2 bg-blue-100">Gene</th>
+              <th class="border border-gray-300 px-4 py-2 bg-blue-100">Mutation</th>
+      `;
+      
+      Object.keys(multiPatientData).forEach(uid => {
+        html += `<th class="border border-gray-300 px-4 py-2 bg-purple-100">${uid}</th>`;
+      });
+      
+      html += `</tr></thead><tbody>`;
+      
+      allMutations.forEach(mutKey => {
+        const [gene, mutation] = mutKey.split('|');
+        html += `<tr>
+          <td class="border border-gray-300 px-4 py-2">${gene}</td>
+          <td class="border border-gray-300 px-4 py-2">${mutation}</td>`;
+        
+        Object.keys(multiPatientData).forEach(uid => {
+          const hasMutation = multiPatientData[uid].some(m => m.gene === gene && m.mutation === mutation);
+          html += `<td class="border border-gray-300 px-4 py-2 text-center">${hasMutation ? '✅' : ''}</td>`;
+        });
+        
+        html += `</tr>`;
+      });
+      
+      html += `</tbody></table>`;
+
+      html += `<div class="flex flex-wrap gap-4 mt-6">`;
+      Object.keys(multiPatientData).forEach(uid => {
+        html += `<button onclick="showPatientReport('${uid}')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">Show Report: ${uid}</button>`;
+      });
+      html += `</div>`;
+
+      container.innerHTML = html;
+    }
+
+    function showPatientReport(userId) {
+      localStorage.setItem('selectedUserId', userId);
+      localStorage.setItem('selectedUserMutations', JSON.stringify(multiPatientData[userId]));
+      window.open('/html.html?patientId=' + encodeURIComponent(userId), '_blank');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,2858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenGuard - Advanced DNA Mutation Analyzer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #111118;
+            --bg-tertiary: #1a1a24;
+            --bg-card: rgba(20, 20, 30, 0.95);
+            --bg-glass: rgba(15, 15, 25, 0.8);
+            --accent-primary: #00d4ff;
+            --accent-secondary: #7c3aed;
+            --accent-tertiary: #f59e0b;
+            --accent-success: #10b981;
+            --accent-danger: #ef4444;
+            --accent-warning: #f59e0b;
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --shadow-glow: 0 0 40px rgba(0, 212, 255, 0.4);
+            --shadow-card: 0 12px 40px rgba(0, 0, 0, 0.5);
+            --gradient-primary: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            --gradient-danger: linear-gradient(135deg, #ef4444, #dc2626);
+            --gradient-warning: linear-gradient(135deg, #f59e0b, #d97706);
+            --gradient-success: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Enhanced Animated Background */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -2;
+        }
+
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 212, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(245, 158, 11, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 60% 30%, rgba(16, 185, 129, 0.1) 0%, transparent 50%);
+            z-index: -1;
+            animation: gradientShift 25s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+
+        /* Enhanced Header */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(25px);
+            background: rgba(10, 10, 15, 0.95);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .logo-icon {
+            width: 70px;
+            height: 70px;
+            background: var(--gradient-primary);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            box-shadow: var(--shadow-glow);
+            animation: logoFloat 3s ease-in-out infinite;
+            position: relative;
+        }
+
+        .logo-icon::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: var(--gradient-primary);
+            border-radius: 22px;
+            z-index: -1;
+            opacity: 0.3;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-5px) rotate(2deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.1); opacity: 0.6; }
+        }
+
+        .logo-text h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+        }
+
+        .logo-text p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 16px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 16px rgba(0, 212, 255, 0.2);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            animation: statusBlink 2s infinite;
+            box-shadow: 0 0 10px var(--accent-primary);
+        }
+
+        @keyframes statusBlink {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            background: var(--bg-glass);
+            backdrop-filter: blur(25px);
+            border-radius: 24px;
+            padding: 0.75rem;
+            margin-bottom: 4rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-card);
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            flex: 1;
+            min-width: 150px;
+            padding: 1.25rem 2rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-weight: 700;
+            border-radius: 18px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            font-size: 1rem;
+            white-space: nowrap;
+        }
+
+        .nav-tab.active {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-2px);
+        }
+
+        .nav-tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Enhanced Hero Section */
+        .hero-section {
+            text-align: center;
+            padding: 4rem 0 6rem;
+            position: relative;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 400px;
+            background: radial-gradient(ellipse, rgba(0, 212, 255, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: -1;
+        }
+
+        .hero-title {
+            font-size: 5rem;
+            font-weight: 900;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary), var(--accent-tertiary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 50px rgba(0, 212, 255, 0.3);
+            animation: titleGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+        }
+
+        .hero-subtitle {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            max-width: 800px;
+            margin: 0 auto 3rem;
+            line-height: 1.8;
+        }
+
+        /* Enhanced Chart Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 3rem;
+            margin-bottom: 4rem;
+        }
+
+        /* Enhanced Chart Cards */
+        .chart-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border-color);
+            border-radius: 32px;
+            padding: 3rem;
+            box-shadow: var(--shadow-card);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: var(--gradient-primary);
+            border-radius: 32px 32px 0 0;
+        }
+
+        .chart-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4), var(--shadow-glow);
+            border-color: rgba(0, 212, 255, 0.3);
+        }
+
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .chart-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .chart-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--gradient-primary);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 8px 24px rgba(0, 212, 255, 0.3);
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .chart-btn {
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .chart-btn:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            transform: translateY(-2px);
+        }
+
+        .chart-btn.active {
+            background: var(--gradient-primary);
+            border-color: transparent;
+            color: white;
+            box-shadow: 0 4px 16px rgba(0, 212, 255, 0.4);
+        }
+
+        /* Enhanced Chart Container */
+        .chart-container {
+            position: relative;
+            height: 500px;
+            margin: 2rem 0;
+            background: rgba(26, 26, 36, 0.5);
+            border-radius: 24px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(0, 212, 255, 0.02) 50%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* Map Container for AI Insights */
+        .map-container {
+            position: relative;
+            height: 500px;
+            margin: 2rem 0;
+            background: rgba(26, 26, 36, 0.5);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        #insights-map {
+            width: 100%;
+            height: 100%;
+            border-radius: 24px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 400px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.5;
+        }
+
+        .empty-state-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-description {
+            font-size: 1rem;
+            max-width: 400px;
+            line-height: 1.6;
+        }
+
+        /* Chart Statistics */
+        .chart-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Enhanced Cards */
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: var(--shadow-card);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .card-description {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Grid Layouts */
+        .grid {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .grid-2 { grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); }
+        .grid-3 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+        .grid-4 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+
+        /* Upload Section */
+        .upload-hero {
+            text-align: center;
+            padding: 4rem 0;
+            margin-bottom: 3rem;
+        }
+
+        .upload-hero h2 {
+            font-size: 4rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary), var(--accent-tertiary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .upload-hero p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent-primary);
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--accent-primary);
+            background: rgba(0, 212, 255, 0.1);
+            transform: scale(1.02);
+        }
+
+        .upload-zone.file-uploaded {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .upload-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2rem;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-info {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            color: #10b981;
+            font-weight: 600;
+            display: none;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-size: 1rem;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-secondary);
+            transform: translateY(-2px);
+        }
+
+        /* Metrics Cards */
+        .metric-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-card);
+        }
+
+        .metric-value {
+            font-size: 3rem;
+            font-weight: 900;
+            margin: 1rem 0;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+        }
+
+        .metric-high { color: #ef4444; }
+        .metric-medium { color: #f59e0b; }
+        .metric-low { color: #10b981; }
+        .metric-info { color: var(--accent-primary); }
+
+        /* Data Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.8rem;
+        }
+
+        .data-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .gene-badge {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .mutation-code {
+            background: var(--bg-tertiary);
+            padding: 0.5rem;
+            border-radius: 8px;
+            font-family: 'Monaco', monospace;
+            font-size: 0.85rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .risk-bar {
+            width: 100px;
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .risk-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        .risk-high { background: linear-gradient(90deg, #ef4444, #dc2626); }
+        .risk-medium { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .risk-low { background: linear-gradient(90deg, #10b981, #059669); }
+
+        /* Progress Bar */
+        .progress-container {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            height: 12px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 12px;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Chat Interface */
+        .chat-button {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 70px;
+            height: 70px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: var(--shadow-glow);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .chat-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.5);
+        }
+
+        .chat-panel {
+            position: fixed;
+            bottom: 6rem;
+            right: 2rem;
+            width: 400px;
+            height: 500px;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            box-shadow: var(--shadow-card);
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        .chat-panel.active {
+            display: flex;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .chat-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            padding: 1rem;
+            border-radius: 16px;
+            max-width: 80%;
+            animation: messageSlide 0.3s ease;
+        }
+
+        @keyframes messageSlide {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .message.user {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .message.ai {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            align-self: flex-start;
+        }
+
+        .chat-input {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-input input {
+            flex: 1;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.75rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .chat-input input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1rem 1.5rem;
+            box-shadow: var(--shadow-card);
+            z-index: 1001;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-color: rgba(16, 185, 129, 0.5);
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .notification.error {
+            border-color: rgba(239, 68, 68, 0.5);
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero-title {
+                font-size: 4rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem 1rem;
+            }
+            .hero-title {
+                font-size: 3rem;
+            }
+            .chart-card {
+                padding: 2rem;
+            }
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+            .nav-tabs {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            .nav-tab {
+                min-width: auto;
+                padding: 1rem;
+            }
+            .chat-panel {
+                width: calc(100vw - 2rem);
+                right: 1rem;
+                height: 400px;
+            }
+            .chart-controls {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            .logo-text h1 {
+                font-size: 2rem;
+            }
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            .header-controls {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            .upload-hero h2 {
+                font-size: 2.5rem;
+            }
+            .chart-card {
+                padding: 1.5rem;
+            }
+            .card {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border-color);
+            border-radius: 50%;
+            border-top-color: var(--accent-primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Smooth Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-secondary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Particles Background -->
+    <div id="particles-js"></div>
+    <div class="bg-gradient"></div>
+
+    <!-- Enhanced Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">🧬</div>
+                <div class="logo-text">
+                    <h1>GenGuard</h1>
+                    <p>Advanced DNA Mutation Analysis Platform</p>
+                </div>
+            </div>
+            <div class="header-controls">
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span>SYSTEM ONLINE</span>
+                </div>
+                <div class="status-indicator" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3);">
+                    <div class="status-dot" style="background: var(--accent-success); box-shadow: 0 0 10px var(--accent-success);"></div>
+                    <span>AI READY</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="switchTab('upload')">
+                📤 Upload Data
+            </button>
+            <button class="nav-tab" onclick="switchTab('results')">
+                📊 Results
+            </button>
+            <button class="nav-tab" onclick="switchTab('charts')">
+                📈 Charts
+            </button>
+            <button class="nav-tab" onclick="switchTab('baby-risk')">
+                👶 Baby Risk
+            </button>
+            <button class="nav-tab" onclick="switchTab('insights')">
+                🧠 AI Insights
+            </button>
+        </div>
+
+        <!-- Upload Tab -->
+        <div id="upload" class="tab-content active">
+            <div class="upload-hero">
+                <h2>Upload Your Genetic Data</h2>
+                <p>Upload your mutation data and clinical variant files for comprehensive genetic analysis powered by advanced AI algorithms</p>
+            </div>
+
+            <div class="grid grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            🧪 Mutation Data
+                            <span style="background: rgba(0,212,255,0.2); color: var(--accent-primary); padding: 0.25rem 0.75rem; border-radius: 8px; font-size: 0.8rem;">CSV</span>
+                        </h3>
+                        <p class="card-description">Upload your mutations.csv file containing gene and mutation data</p>
+                    </div>
+                    <div class="upload-zone" id="mutation-upload-zone" onclick="document.getElementById('mutation-file').click()">
+                        <div class="upload-icon">📤</div>
+                        <h4>Drop mutations.csv here</h4>
+                        <p style="color: var(--text-muted); margin-top: 0.5rem;">or click to browse files</p>
+                        <input type="file" id="mutation-file" class="file-input" accept=".csv" onchange="handleFileSelect(event, 'mutation')">
+                        <div class="file-info" id="mutation-file-info"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            🔬 Clinical Data
+                            <span style="background: rgba(124,58,237,0.2); color: var(--accent-secondary); padding: 0.25rem 0.75rem; border-radius: 8px; font-size: 0.8rem;">ClinVar</span>
+                        </h3>
+                        <p class="card-description">Upload your clinvar_data.csv file with clinical significance data</p>
+                    </div>
+                    <div class="upload-zone" id="clinvar-upload-zone" onclick="document.getElementById('clinvar-file').click()">
+                        <div class="upload-icon">🔬</div>
+                        <h4>Drop clinvar_data.csv here</h4>
+                        <p style="color: var(--text-muted); margin-top: 0.5rem;">or click to browse files</p>
+                        <input type="file" id="clinvar-file" class="file-input" accept=".csv" onchange="handleFileSelect(event, 'clinvar')">
+                        <div class="file-info" id="clinvar-file-info"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 3rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <button class="btn btn-primary" id="analyze-btn" onclick="analyzeData()" disabled>
+                    🔬 Analyze Mutations
+                </button>
+                <button class="btn btn-secondary" onclick="loadSampleData()">
+                    ⭐ Try Sample Data
+                </button>
+            </div>
+
+            <!-- Progress Section -->
+            <div id="progress-section" style="display: none; margin-top: 3rem;">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">🧬 Analyzing Genetic Variants</h3>
+                        <p class="card-description">Processing mutations, calculating risk scores, and matching with clinical data...</p>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+                    </div>
+                    <div style="text-align: center; margin-top: 1rem;">
+                        <span id="progress-text">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Tab -->
+        <div id="results" class="tab-content">
+            <div class="grid grid-4" style="margin-bottom: 3rem;">
+                <div class="metric-card">
+                    <div class="metric-label">High Risk</div>
+                    <div class="metric-value metric-high" id="high-risk-count">0</div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Critical attention required</p>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Medium Risk</div>
+                    <div class="metric-value metric-medium" id="medium-risk-count">0</div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Monitor closely</p>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Low Risk</div>
+                    <div class="metric-value metric-low" id="low-risk-count">0</div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Routine follow-up</p>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Total Analyzed</div>
+                    <div class="metric-value metric-info" id="total-count">0</div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Variants processed</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🧪 Mutation Analysis Results</h3>
+                    <p class="card-description">Comprehensive analysis of genetic variants with risk assessment</p>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="results-table">
+                        <thead>
+                            <tr>
+                                <th>Gene</th>
+                                <th>Mutation</th>
+                                <th>Disease</th>
+                                <th>Risk Score</th>
+                                <th>Clinical Significance</th>
+                                <th>Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody id="results-tbody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                                    No data available. Please upload files and run analysis.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enhanced Charts Tab -->
+        <div id="charts" class="tab-content">
+            <!-- Hero Section -->
+            <div class="hero-section">
+                <h1 class="hero-title">Advanced Genetic Analytics</h1>
+                <p class="hero-subtitle">
+                    Comprehensive visualization and analysis of DNA mutations with AI-powered insights 
+                    and real-time data processing for precision medicine applications
+                </p>
+            </div>
+
+            <!-- Enhanced Charts Grid -->
+            <div class="charts-grid" id="charts-grid">
+                <!-- Charts will be dynamically generated here based on uploaded data -->
+            </div>
+
+            <!-- Empty State for Charts -->
+            <div id="charts-empty-state" class="empty-state">
+                <div class="empty-state-icon">📊</div>
+                <h3 class="empty-state-title">No Data Available</h3>
+                <p class="empty-state-description">
+                    Upload your genetic data files and run the analysis to see comprehensive charts and visualizations of your mutation data.
+                </p>
+                <button class="btn btn-primary" onclick="switchTab('upload')" style="margin-top: 2rem;">
+                    📤 Upload Data
+                </button>
+            </div>
+        </div>
+
+        <!-- Baby Risk Predictor Tab -->
+        <div id="baby-risk" class="tab-content">
+            <div class="hero-section">
+                <h1 class="hero-title">Baby Genetic Risk Predictor</h1>
+                <p class="hero-subtitle">
+                    Upload mutation data for both parents to predict potential genetic risks for your future baby
+                </p>
+            </div>
+
+            <div class="grid grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            👩 Mother's Genetic Data
+                            <span style="background: rgba(239,68,68,0.2); color: #ef4444; padding: 0.25rem 0.75rem; border-radius: 8px; font-size: 0.8rem;">CSV</span>
+                        </h3>
+                        <p class="card-description">Upload mother's mutation data file</p>
+                    </div>
+                    <div class="upload-zone" id="mother-upload-zone" onclick="document.getElementById('mother-file').click()">
+                        <div class="upload-icon">👩</div>
+                        <h4>Drop mother's mutations.csv here</h4>
+                        <p style="color: var(--text-muted); margin-top: 0.5rem;">or click to browse files</p>
+                        <input type="file" id="mother-file" class="file-input" accept=".csv" onchange="handleParentFileSelect(event, 'mother')">
+                        <div class="file-info" id="mother-file-info"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            👨 Father's Genetic Data
+                            <span style="background: rgba(0,212,255,0.2); color: var(--accent-primary); padding: 0.25rem 0.75rem; border-radius: 8px; font-size: 0.8rem;">CSV</span>
+                        </h3>
+                        <p class="card-description">Upload father's mutation data file</p>
+                    </div>
+                    <div class="upload-zone" id="father-upload-zone" onclick="document.getElementById('father-file').click()">
+                        <div class="upload-icon">👨</div>
+                        <h4>Drop father's mutations.csv here</h4>
+                        <p style="color: var(--text-muted); margin-top: 0.5rem;">or click to browse files</p>
+                        <input type="file" id="father-file" class="file-input" accept=".csv" onchange="handleParentFileSelect(event, 'father')">
+                        <div class="file-info" id="father-file-info"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 3rem;">
+                <button class="btn btn-primary" id="predict-btn" onclick="predictBabyRisk()" disabled>
+                    🧬 Predict Baby's Risk
+                </button>
+            </div>
+
+            <!-- Baby Risk Results -->
+            <div id="baby-risk-results" style="display: none; margin-top: 3rem;">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">👶 Baby's Predicted Genetic Profile</h3>
+                        <p class="card-description">Based on inheritance simulation from both parents</p>
+                    </div>
+                    
+                    <div class="grid grid-3" style="margin-bottom: 2rem;">
+                        <div class="metric-card">
+                            <div class="metric-label">Risk Score</div>
+                            <div class="metric-value" id="baby-risk-score">0</div>
+                            <p style="color: var(--text-muted); font-size: 0.9rem;">Total genetic risk</p>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Inherited Genes</div>
+                            <div class="metric-value" id="baby-gene-count">0</div>
+                            <p style="color: var(--text-muted); font-size: 0.9rem;">From both parents</p>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Risk Level</div>
+                            <div class="metric-value" id="baby-risk-level">-</div>
+                            <p style="color: var(--text-muted); font-size: 0.9rem;">Overall assessment</p>
+                        </div>
+                    </div>
+
+                    <div id="baby-risk-details" style="margin-bottom: 2rem;">
+                        <!-- Risk details will be populated here -->
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="baby-risk-chart"></canvas>
+                    </div>
+
+                    <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 12px; padding: 1.5rem; margin-top: 2rem;">
+                        <h4 style="color: var(--accent-primary); margin-bottom: 1rem; font-weight: 600;">📋 Understanding the Results</h4>
+                        <ul style="list-style: none; padding: 0; margin: 0; color: var(--text-secondary);">
+                            <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="color: var(--accent-primary);">•</span>
+                                Each gene has a 50% chance of being inherited from each parent
+                            </li>
+                            <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="color: var(--accent-secondary);">•</span>
+                                Risk scores are cumulative based on inherited mutations
+                            </li>
+                            <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="color: var(--accent-tertiary);">•</span>
+                                This is a simulation - consult genetic counselors for real planning
+                            </li>
+                            <li style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="color: #10b981;">•</span>
+                                Results help understand potential genetic inheritance patterns
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Insights Tab with Google Maps -->
+        <div id="insights" class="tab-content">
+            <div style="text-align: center; margin-bottom: 3rem;">
+                <h2 style="font-size: 3rem; font-weight: 900; margin-bottom: 1rem; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                    AI-Powered Insights
+                </h2>
+                <p style="font-size: 1.2rem; color: var(--text-secondary);">Advanced machine learning analysis of your genetic data</p>
+            </div>
+
+            <div class="grid grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">⚠️ High Priority Findings</h3>
+                        <p class="card-description">Critical mutations requiring immediate attention</p>
+                    </div>
+                    <div id="high-priority-findings">
+                        <p style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                            No analysis data available. Upload files and run analysis to see high-priority findings.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">💡 AI Recommendations</h3>
+                        <p class="card-description">Personalized recommendations based on your genetic profile</p>
+                    </div>
+                    <div id="ai-recommendations">
+                        <p style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                            AI recommendations will appear here after data analysis is complete.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Google Maps Section - Only in AI Insights -->
+            <div class="card" style="margin-top: 3rem; padding: 0; overflow: hidden;">
+                <div class="card-header" style="padding: 2rem;">
+                    <h3 class="card-title" style="display: flex; align-items: center; gap: 0.75rem;">
+                        🗺️ Nearby Genetic Counseling Centers & Hospitals
+                    </h3>
+                    <p class="card-description">
+                        Find specialized genetic counseling centers and hospitals near you for follow-up consultations and advanced genetic testing.
+                    </p>
+                </div>
+                <div class="map-container">
+                    <div id="insights-map"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Interface -->
+    <button class="chat-button" onclick="toggleChat()">💬</button>
+    <div class="chat-panel" id="chat-panel">
+        <div class="chat-header">
+            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                🧠
+            </div>
+            <div>
+                <h4 style="margin: 0; font-weight: 600;">AI Genetics Assistant</h4>
+                <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary);">Advanced genomic analysis support</p>
+            </div>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="message ai">
+                <p>Welcome to GenGuard! I'm your AI genetics specialist. Upload your data files to begin comprehensive analysis. How can I assist you today?</p>
+            </div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="chat-input" placeholder="Ask about your genetic analysis..." onkeypress="handleChatKeyPress(event)">
+            <button class="btn btn-primary" onclick="sendMessage()" style="padding: 0.75rem;">➤</button>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <!-- Google Maps Script -->
+    <script>
+        function initMap() {
+            // Only initialize map when AI Insights tab is active
+            const location = { lat: 21.1458, lng: 79.0882 };
+            const map = new google.maps.Map(document.getElementById("insights-map"), {
+                zoom: 12,
+                center: location,
+                styles: [
+                    {
+                        "elementType": "geometry",
+                        "stylers": [{"color": "#1d2c4d"}]
+                    },
+                    {
+                        "elementType": "labels.text.fill",
+                        "stylers": [{"color": "#8ec3b9"}]
+                    },
+                    {
+                        "elementType": "labels.text.stroke",
+                        "stylers": [{"color": "#1a3646"}]
+                    },
+                    {
+                        "featureType": "administrative.country",
+                        "elementType": "geometry.stroke",
+                        "stylers": [{"color": "#4b6878"}]
+                    },
+                    {
+                        "featureType": "administrative.land_parcel",
+                        "elementType": "labels.text.fill",
+                        "stylers": [{"color": "#64779e"}]
+                    },
+                    {
+                        "featureType": "administrative.province",
+                        "elementType": "geometry.stroke",
+                        "stylers": [{"color": "#4b6878"}]
+                    },
+                    {
+                        "featureType": "landscape.man_made",
+                        "elementType": "geometry.stroke",
+                        "stylers": [{"color": "#334e87"}]
+                    },
+                    {
+                        "featureType": "landscape.natural",
+                        "elementType": "geometry",
+                        "stylers": [{"color": "#023e58"}]
+                    },
+                    {
+                        "featureType": "poi",
+                        "elementType": "geometry",
+                        "stylers": [{"color": "#283d6a"}]
+                    },
+                    {
+                        "featureType": "poi",
+                        "elementType": "labels.text.fill",
+                        "stylers": [{"color": "#6f9ba4"}]
+                    },
+                    {
+                        "featureType": "poi",
+                        "elementType": "labels.text.stroke",
+                        "stylers": [{"color": "#1d2c4d"}]
+                    },
+                    {
+                        "featureType": "poi.park",
+                        "elementType": "geometry.fill",
+                        "stylers": [{"color": "#023e58"}]
+                    },
+                    {
+                        "featureType": "poi.park",
+                        "elementType": "labels.text.fill",
+                        "stylers": [{"color": "#3C7680"}]
+                    },
+                    {
+                        "featureType": "road",
+                        "elementType": "geometry",
+                        "stylers": [{"color": "#304a7d"}]
+                    },
+                    {
+                        "featureType": "road",
+                        "elementType": "labels.text.fill",
+                        "stylers": [{"color": "#98a5be"}]
+                    },
+                    {
+                        "featureType": "road",
+                        "elementType": "labels.text.stroke",
+                        "stylers": [{"color": "#1d2c4d"}]
+                    },
+                    {
+                        "featureType": "road.highway",
+                        "elementType": "geometry",
+                        "stylers": [{"color": "#2c6675"}]
+                    },
+                    {
+                        "featureType": "road.highway",
+                        "elementType": "geometry.stroke",
+                        "stylers": [{"color": "#255763"}]
+                    },
+                    {
+                        "featureType": "road.highway",
+                        "elementType": "labels.text.fill",
+                        "stylers": [{"color": "#b0d5ce"}]
+                    },
+                    {
+                        "featureType": "road.highway",
+                        "elementType": "labels.text.stroke",
+                        "stylers": [{"color": "#023e58"}]
+                    },
+                    {
+                        "featureType": "transit",
+                        "elementType": "labels.text.fill",
+                        "stylers": [{"color": "#98a5be"}]
+                    },
+                    {
+                        "featureType": "transit",
+                        "elementType": "labels.text.stroke",
+                        "stylers": [{"color": "#1d2c4d"}]
+                    },
+                    {
+                        "featureType": "transit.line",
+                        "elementType": "geometry.fill",
+                        "stylers": [{"color": "#283d6a"}]
+                    },
+                    {
+                        "featureType": "transit.station",
+                        "elementType": "geometry",
+                        "stylers": [{"color": "#3a4762"}]
+                    },
+                    {
+                        "featureType": "water",
+                        "elementType": "geometry",
+                        "stylers": [{"color": "#0e1626"}]
+                    },
+                    {
+                        "featureType": "water",
+                        "elementType": "labels.text.fill",
+                        "stylers": [{"color": "#4e6d70"}]
+                    }
+                ]
+            });
+
+            // GenGuard location marker
+            new google.maps.Marker({
+                position: location,
+                map: map,
+                title: "GenGuard Location",
+                icon: {
+                    url: "data:image/svg+xml;charset=UTF-8,%3csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='20' cy='20' r='18' fill='%2300d4ff'/%3e%3ctext x='20' y='28' text-anchor='middle' fill='white' font-size='20'%3e🧬%3c/text%3e%3c/svg%3e",
+                    scaledSize: new google.maps.Size(40, 40)
+                }
+            });
+
+            // Hospital and genetic counseling center locations
+            const hospitals = [
+                { name: "Care Hospital - Genetic Counseling", lat: 21.1466, lng: 79.0849, type: "genetic" },
+                { name: "Wockhardt Hospital - Genetics Dept", lat: 21.1317, lng: 79.0707, type: "genetic" },
+                { name: "Orange City Hospital", lat: 21.1277, lng: 79.0732, type: "hospital" },
+                { name: "KRIMS Hospitals - Genetic Testing", lat: 21.1432, lng: 79.0807, type: "genetic" },
+                { name: "Genetic Counseling Center", lat: 21.1520, lng: 79.0920, type: "genetic" },
+                { name: "Advanced Genomics Clinic", lat: 21.1380, lng: 79.0650, type: "genetic" }
+            ];
+
+            hospitals.forEach(hospital => {
+                const marker = new google.maps.Marker({
+                    position: { lat: hospital.lat, lng: hospital.lng },
+                    map: map,
+                    icon: {
+                        url: hospital.type === 'genetic' 
+                            ? "data:image/svg+xml;charset=UTF-8,%3csvg width='32' height='32' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='16' cy='16' r='14' fill='%2310b981'/%3e%3ctext x='16' y='22' text-anchor='middle' fill='white' font-size='16'%3e🧬%3c/text%3e%3c/svg%3e"
+                            : "data:image/svg+xml;charset=UTF-8,%3csvg width='32' height='32' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='16' cy='16' r='14' fill='%23ef4444'/%3e%3ctext x='16' y='22' text-anchor='middle' fill='white' font-size='16'%3e🏥%3c/text%3e%3c/svg%3e",
+                        scaledSize: new google.maps.Size(32, 32)
+                    },
+                    title: hospital.name
+                });
+
+                const infoWindow = new google.maps.InfoWindow({
+                    content: `
+                        <div style="color: #1a1a24; padding: 0.5rem;">
+                            <strong>${hospital.name}</strong><br>
+                            <span style="color: ${hospital.type === 'genetic' ? '#10b981' : '#ef4444'};">
+                                ${hospital.type === 'genetic' ? '🧬 Genetic Counseling Available' : '🏥 General Hospital'}
+                            </span>
+                        </div>
+                    `
+                });
+
+                marker.addListener("click", () => {
+                    infoWindow.open(map, marker);
+                });
+            });
+        }
+    </script>
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA1WewNFnw6A4TD9_WKhhfxjHkGzBjFUEY&callback=initMap"
+        async
+        defer
+    ></script>
+
+    <script>
+    // Global variables
+    let analysisResults = [];
+    let charts = {};
+    let uploadedFiles = {
+        mutation: null,
+        clinvar: null
+    };
+    // Baby Risk Predictor Variables
+    let motherGenes = [];
+    let fatherGenes = [];
+    let babyRiskChart = null;
+
+    // Mutation risk scores
+    const mutationRisk = {
+        "BRCA1": 70,
+        "TP53": 60,
+        "BRCA2": 50,
+        "CFTR": 30,
+        "APOE4": 40,
+        "KRAS": 45,
+        "EGFR": 35,
+        "PIK3CA": 25,
+        "APC": 55,
+        "MLH1": 65,
+        "PALB2": 50,
+        "ATM": 40,
+        "CHEK2": 30,
+        "NBN": 35
+    };
+
+    // Handle parent file selection
+    function handleParentFileSelect(event, parent) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+            showNotification('Please select a CSV file', 'error');
+            return;
+        }
+
+        const uploadZone = document.getElementById(`${parent}-upload-zone`);
+        const fileInfo = document.getElementById(`${parent}-file-info`);
+        
+        uploadZone.classList.add('file-uploaded');
+        fileInfo.style.display = 'block';
+        fileInfo.innerHTML = `✅ ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+        
+        // Parse CSV file using Papa Parse
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                const genes = results.data.map(row => row.Gene?.trim()).filter(Boolean);
+                if (parent === 'mother') {
+                    motherGenes = genes;
+                } else {
+                    fatherGenes = genes;
+                }
+                console.log(`${parent} genes:`, genes);
+            },
+            error: function(error) {
+                console.error(`Error parsing ${parent} file:`, error);
+                showNotification(`Error parsing ${parent}'s file`, 'error');
+            }
+        });
+        
+        showNotification(`${parent === 'mother' ? 'Mother' : 'Father'}'s file uploaded successfully!`, 'success');
+        checkPredictButton();
+    }
+
+    // Check if predict button should be enabled
+    function checkPredictButton() {
+        const predictBtn = document.getElementById('predict-btn');
+        if (motherGenes.length > 0 && fatherGenes.length > 0) {
+            predictBtn.disabled = false;
+        }
+    }
+
+    // Simulate genetic inheritance
+    function simulateInheritance(motherGenes, fatherGenes) {
+        const seed = 42; // Fixed seed for consistent results
+        let randomIndex = 0;
+        const combined = motherGenes.concat(fatherGenes);
+        const randoms = combined.map((_, i) => Math.abs(Math.sin(seed + i)) % 1);
+
+        const babyGenes = [];
+
+        // 50% chance of inheriting each gene from mother
+        motherGenes.forEach((gene, i) => {
+            if (randoms[randomIndex++] < 0.5) {
+                babyGenes.push(gene);
+            }
+        });
+
+        // 50% chance of inheriting each gene from father
+        fatherGenes.forEach((gene, i) => {
+            if (randoms[randomIndex++] < 0.5) {
+                babyGenes.push(gene);
+            }
+        });
+
+        // Remove duplicates
+        return [...new Set(babyGenes)];
+    }
+
+    // Calculate baby's risk score
+    function calculateBabyRisk(genes) {
+        return genes.reduce((sum, gene) => sum + (mutationRisk[gene] || 0), 0);
+    }
+
+    // Predict baby's genetic risk
+    function predictBabyRisk() {
+        if (motherGenes.length === 0 || fatherGenes.length === 0) {
+            showNotification('Please upload both parent files', 'error');
+            return;
+        }
+
+        // Simulate inheritance
+        const inheritedGenes = simulateInheritance(motherGenes, fatherGenes);
+        const riskScore = calculateBabyRisk(inheritedGenes);
+        
+        // Determine risk level
+        let riskLevel = 'Low';
+        let riskColor = '#10b981';
+        if (riskScore > 100) {
+            riskLevel = 'High';
+            riskColor = '#ef4444';
+        } else if (riskScore > 50) {
+            riskLevel = 'Medium';
+            riskColor = '#f59e0b';
+        }
+
+        // Update UI
+        document.getElementById('baby-risk-score').textContent = riskScore;
+        document.getElementById('baby-risk-score').style.color = riskColor;
+        document.getElementById('baby-gene-count').textContent = inheritedGenes.length;
+        document.getElementById('baby-risk-level').textContent = riskLevel;
+        document.getElementById('baby-risk-level').style.color = riskColor;
+
+        // Show detailed results
+        const detailsContainer = document.getElementById('baby-risk-details');
+        detailsContainer.innerHTML = `
+            <div style="background: rgba(${riskColor === '#ef4444' ? '239, 68, 68' : riskColor === '#f59e0b' ? '245, 158, 11' : '16, 185, 129'}, 0.1); 
+                        border: 1px solid rgba(${riskColor === '#ef4444' ? '239, 68, 68' : riskColor === '#f59e0b' ? '245, 158, 11' : '16, 185, 129'}, 0.3); 
+                        border-radius: 12px; padding: 1.5rem;">
+                <h4 style="color: ${riskColor}; margin-bottom: 1rem; font-weight: 600;">
+                    ${riskLevel === 'High' ? '⚠️ High Risk Assessment' : riskLevel === 'Medium' ? '🟡 Medium Risk Assessment' : '🟢 Low Risk Assessment'}
+                </h4>
+                <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+                    <strong>Inherited Genes:</strong> ${inheritedGenes.length > 0 ? inheritedGenes.join(', ') : 'None detected'}
+                </p>
+                <p style="margin: 0; color: var(--text-secondary);">
+                    ${riskLevel === 'High' ? 
+                        'Consider genetic counseling and enhanced screening protocols.' : 
+                        riskLevel === 'Medium' ? 
+                        'Regular monitoring and preventive care recommended.' : 
+                        'Standard care protocols should be sufficient.'}
+                </p>
+            </div>
+        `;
+
+        // Generate chart
+        generateBabyRiskChart(inheritedGenes);
+
+        // Show results section
+        document.getElementById('baby-risk-results').style.display = 'block';
+        
+        showNotification('Baby risk prediction completed!', 'success');
+    }
+
+    // Generate baby risk chart
+    function generateBabyRiskChart(inheritedGenes) {
+        const ctx = document.getElementById('baby-risk-chart').getContext('2d');
+        
+        if (babyRiskChart) {
+            babyRiskChart.destroy();
+        }
+
+        if (inheritedGenes.length === 0) {
+            // Show empty state
+            ctx.fillStyle = '#71717a';
+            ctx.font = '16px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText('No inherited risk genes detected', ctx.canvas.width / 2, ctx.canvas.height / 2);
+            return;
+        }
+
+        const geneScores = inheritedGenes.map(gene => mutationRisk[gene] || 0);
+        const backgroundColors = geneScores.map(score => {
+            if (score > 60) return '#ef4444';
+            if (score > 30) return '#f59e0b';
+            return '#10b981';
+        });
+
+        babyRiskChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: inheritedGenes,
+                datasets: [{
+                    data: geneScores,
+                    backgroundColor: backgroundColors,
+                    borderColor: '#ffffff',
+                    borderWidth: 3,
+                    hoverBorderWidth: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#ffffff',
+                            padding: 20,
+                            font: { size: 12, weight: 'bold' },
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Genetic Risk Contribution by Inherited Gene',
+                        color: '#ffffff',
+                        font: { size: 16, weight: 'bold' },
+                        padding: 20
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(20, 20, 30, 0.95)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#a1a1aa',
+                        borderColor: 'rgba(0, 212, 255, 0.3)',
+                        borderWidth: 1,
+                        cornerRadius: 12,
+                        padding: 15,
+                        callbacks: {
+                            label: function(context) {
+                                const gene = context.label;
+                                const score = context.parsed;
+                                const percentage = ((score / geneScores.reduce((a, b) => a + b, 0)) * 100).toFixed(1);
+                                return `${gene}: ${score} risk points (${percentage}%)`;
+                            }
+                        }
+                    }
+                },
+                cutout: '50%'
+            }
+        });
+    }
+
+    // Tab switching
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        document.getElementById(tabName).classList.add('active');
+        event.target.classList.add('active');
+
+        if (tabName === 'charts') {
+            setTimeout(generateCharts, 100);
+        } else if (tabName === 'baby-risk') {
+            // Reset baby risk form if needed
+            setTimeout(() => {
+                if (babyRiskChart) {
+                    babyRiskChart.resize();
+                }
+            }, 100);
+        } else if (tabName === 'insights') {
+            // Initialize map when insights tab is opened
+            setTimeout(() => {
+                if (typeof google !== 'undefined' && google.maps) {
+                    initMap();
+                }
+            }, 100);
+        }
+    }
+
+    // Initialize particles
+    particlesJS('particles-js', {
+        particles: {
+            number: { value: 120, density: { enable: true, value_area: 1000 } },
+            color: { value: ['#00d4ff', '#7c3aed', '#f59e0b', '#10b981'] },
+            shape: { type: 'circle' },
+            opacity: { value: 0.6, random: true },
+            size: { value: 4, random: true },
+            line_linked: {
+                enable: true,
+                distance: 180,
+                color: '#00d4ff',
+                opacity: 0.3,
+                width: 1.5
+            },
+            move: {
+                enable: true,
+                speed: 1.5,
+                direction: 'none',
+                random: true,
+                straight: false,
+                out_mode: 'out',
+                bounce: false
+            }
+        },
+        interactivity: {
+            detect_on: 'canvas',
+            events: {
+                onhover: { enable: true, mode: 'repulse' },
+                onclick: { enable: true, mode: 'push' },
+                resize: true
+            },
+            modes: {
+                repulse: { distance: 100, duration: 0.4 },
+                push: { particles_nb: 4 }
+            }
+        },
+        retina_detect: true
+    });
+
+    // Sample mutation data for testing
+    const sampleMutationData = [
+        { Gene: "BRCA1", Mutation: "c.68_69delAG" },
+        { Gene: "TP53", Mutation: "c.524G>A" },
+        { Gene: "KRAS", Mutation: "c.35G>A" },
+        { Gene: "EGFR", Mutation: "c.2573T>G" },
+        { Gene: "PIK3CA", Mutation: "c.3140A>G" },
+        { Gene: "APC", Mutation: "c.835-8A>G" },
+        { Gene: "MLH1", Mutation: "c.1852_1854del" },
+        { Gene: "PALB2", Mutation: "c.172_175del" }
+    ];
+
+    const sampleClinvarData = [
+        { Gene: "BRCA1", Mutation: "c.68_69delAG", Disease: "Hereditary Breast and Ovarian Cancer", ClinicalSignificance: "Pathogenic" },
+        { Gene: "TP53", Mutation: "c.524G>A", Disease: "Li-Fraumeni Syndrome", ClinicalSignificance: "Pathogenic" },
+        { Gene: "KRAS", Mutation: "c.35G>A", Disease: "Colorectal Cancer", ClinicalSignificance: "Likely Pathogenic" },
+        { Gene: "EGFR", Mutation: "c.2573T>G", Disease: "Non-Small Cell Lung Cancer", ClinicalSignificance: "Uncertain Significance" },
+        { Gene: "PIK3CA", Mutation: "c.3140A>G", Disease: "Breast Cancer", ClinicalSignificance: "Likely Pathogenic" },
+        { Gene: "MLH1", Mutation: "c.1852_1854del", Disease: "Lynch Syndrome", ClinicalSignificance: "Pathogenic" },
+        { Gene: "PALB2", Mutation: "c.172_175del", Disease: "Hereditary Breast Cancer", ClinicalSignificance: "Pathogenic" }
+    ];
+
+    // Chart configuration
+    const chartConfig = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    color: '#ffffff',
+                    padding: 25,
+                    font: { size: 14, weight: 'bold' },
+                    usePointStyle: true,
+                    pointStyle: 'circle'
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(20, 20, 30, 0.95)',
+                titleColor: '#ffffff',
+                bodyColor: '#a1a1aa',
+                borderColor: 'rgba(0, 212, 255, 0.3)',
+                borderWidth: 1,
+                cornerRadius: 12,
+                padding: 15,
+                titleFont: { size: 16, weight: 'bold' },
+                bodyFont: { size: 14 }
+            }
+        },
+        scales: {
+            x: {
+                ticks: { color: '#ffffff', font: { weight: 'bold' } },
+                grid: { color: 'rgba(255,255,255,0.1)' },
+                border: { color: 'rgba(255,255,255,0.2)' }
+            },
+            y: {
+                ticks: { color: '#ffffff', font: { weight: 'bold' } },
+                grid: { color: 'rgba(255,255,255,0.1)' },
+                border: { color: 'rgba(255,255,255,0.2)' }
+            }
+        },
+        animation: {
+            duration: 2000,
+            easing: 'easeInOutQuart'
+        }
+    };
+
+    // Generate charts based on analysis results
+    function generateCharts() {
+        if (analysisResults.length === 0) {
+            showEmptyChartsState();
+            return;
+        }
+
+        hideEmptyChartsState();
+        const chartsGrid = document.getElementById('charts-grid');
+        chartsGrid.innerHTML = '';
+
+        // Generate Risk Distribution Chart
+        generateRiskChart();
+        
+        // Generate Gene Frequency Chart
+        generateGeneChart();
+        
+        // Generate Clinical Significance Chart
+        generateClinicalChart();
+        
+        // Generate Risk vs Confidence Scatter Chart
+        generateScatterChart();
+
+        // Generate additional charts if we have enough data
+        if (analysisResults.length > 5) {
+            generateTemporalChart();
+            generateHotspotChart();
+        }
+    }
+
+    function showEmptyChartsState() {
+        const emptyState = document.getElementById('charts-empty-state');
+        const chartsGrid = document.getElementById('charts-grid');
+        if (emptyState) emptyState.style.display = 'flex';
+        if (chartsGrid) chartsGrid.style.display = 'none';
+    }
+
+    function hideEmptyChartsState() {
+        const emptyState = document.getElementById('charts-empty-state');
+        const chartsGrid = document.getElementById('charts-grid');
+        if (emptyState) emptyState.style.display = 'none';
+        if (chartsGrid) chartsGrid.style.display = 'grid';
+    }
+
+    function createChartCard(id, title, icon, description) {
+        return `
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">
+                        <div class="chart-icon">${icon}</div>
+                        ${title}
+                    </div>
+                    <div class="chart-controls">
+                        <button class="chart-btn active" onclick="updateChart('${id}', 'primary')">Primary</button>
+                        <button class="chart-btn" onclick="updateChart('${id}', 'secondary')">Secondary</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="${id}"></canvas>
+                </div>
+                <div class="chart-stats" id="${id}-stats">
+                    <!-- Stats will be populated dynamically -->
+                </div>
+            </div>
+        `;
+    }
+
+    function generateRiskChart() {
+        const chartsGrid = document.getElementById('charts-grid');
+        chartsGrid.insertAdjacentHTML('beforeend', createChartCard('riskChart', 'Risk Score Distribution', '📊', 'Distribution of risk scores across analyzed mutations'));
+
+        const riskCounts = {
+            High: analysisResults.filter(r => r.category === "High").length,
+            Medium: analysisResults.filter(r => r.category === "Medium").length,
+            Low: analysisResults.filter(r => r.category === "Low").length
+        };
+
+        const ctx = document.getElementById('riskChart').getContext('2d');
+        charts.riskChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['High Risk', 'Medium Risk', 'Low Risk'],
+                datasets: [{
+                    data: [riskCounts.High, riskCounts.Medium, riskCounts.Low],
+                    backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
+                    borderWidth: 0,
+                    hoverBorderWidth: 3,
+                    hoverBorderColor: '#ffffff'
+                }]
+            },
+            options: {
+                ...chartConfig,
+                cutout: '60%'
+            }
+        });
+
+        // Update stats
+        const total = analysisResults.length;
+        document.getElementById('riskChart-stats').innerHTML = `
+            <div class="stat-item">
+                <div class="stat-value" style="color: #ef4444;">${((riskCounts.High / total) * 100).toFixed(1)}%</div>
+                <div class="stat-label">High Risk</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" style="color: #f59e0b;">${((riskCounts.Medium / total) * 100).toFixed(1)}%</div>
+                <div class="stat-label">Medium Risk</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" style="color: #10b981;">${((riskCounts.Low / total) * 100).toFixed(1)}%</div>
+                <div class="stat-label">Low Risk</div>
+            </div>
+        `;
+    }
+
+    function generateGeneChart() {
+        const chartsGrid = document.getElementById('charts-grid');
+        chartsGrid.insertAdjacentHTML('beforeend', createChartCard('geneChart', 'Gene Frequency Analysis', '🧬', 'Frequency of mutations by gene'));
+
+        const geneCounts = {};
+        analysisResults.forEach(result => {
+            geneCounts[result.gene] = (geneCounts[result.gene] || 0) + 1;
+        });
+
+        const sortedGenes = Object.entries(geneCounts)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, 10); // Top 10 genes
+
+        const ctx = document.getElementById('geneChart').getContext('2d');
+        charts.geneChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: sortedGenes.map(([gene]) => gene),
+                datasets: [{
+                    label: 'Mutations',
+                    data: sortedGenes.map(([, count]) => count),
+                    backgroundColor: ['#00d4ff', '#7c3aed', '#f59e0b', '#10b981', '#ef4444', '#06b6d4', '#8b5cf6', '#f97316', '#ec4899', '#84cc16'],
+                    borderRadius: 8,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                ...chartConfig,
+                plugins: {
+                    ...chartConfig.plugins,
+                    legend: { display: false }
+                }
+            }
+        });
+
+        // Update stats
+        const mostFrequent = sortedGenes[0];
+        const uniqueGenes = Object.keys(geneCounts).length;
+        const avgMutations = (analysisResults.length / uniqueGenes).toFixed(1);
+
+        document.getElementById('geneChart-stats').innerHTML = `
+            <div class="stat-item">
+                <div class="stat-value" style="color: var(--accent-primary);">${mostFrequent ? mostFrequent[0] : 'N/A'}</div>
+                <div class="stat-label">Most Frequent</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" style="color: var(--accent-secondary);">${uniqueGenes}</div>
+                <div class="stat-label">Unique Genes</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" style="color: var(--accent-tertiary);">${avgMutations}</div>
+                <div class="stat-label">Avg Mutations</div>
+            </div>
+        `;
+    }
+
+    function generateClinicalChart() {
+        const chartsGrid = document.getElementById('charts-grid');
+        chartsGrid.insertAdjacentHTML('beforeend', createChartCard('clinicalChart', 'Clinical Significance', '🏥', 'Distribution of clinical significance categories'));
+
+        const clinicalCounts = {};
+        analysisResults.forEach(result => {
+            clinicalCounts[result.clinicalSignificance] = (clinicalCounts[result.clinicalSignificance] || 0) + 1;
+        });
+
+        const ctx = document.getElementById('clinicalChart').getContext('2d');
+        charts.clinicalChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(clinicalCounts),
+                datasets: [{
+                    data: Object.values(clinicalCounts),
+                    backgroundColor: ['#ef4444', '#f59e0b', '#71717a', '#06b6d4', '#10b981'],
+                    borderWidth: 0,
+                    hoverBorderWidth: 3,
+                    hoverBorderColor: '#ffffff'
+                }]
+            },
+            options: chartConfig
+        });
+
+        // Update stats
+        const pathogenic = clinicalCounts['Pathogenic'] || 0;
+        const likelyPathogenic = clinicalCounts['Likely Pathogenic'] || 0;
+        const uncertain = clinicalCounts['Uncertain Significance'] || 0;
+
+        document.getElementById('clinicalChart-stats').innerHTML = `
+            <div class="stat-item">
+                <div class="stat-value" style="color: #ef4444;">${pathogenic}</div>
+                <div class="stat-label">Pathogenic</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" style="color: #f59e0b;">${likelyPathogenic}</div>
+                <div class="stat-label">Likely Path.</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" style="color: #71717a;">${uncertain}</div>
+                <div class="stat-label">Uncertain</div>
+            </div>
+        `;
+    }
+
+    function generateScatterChart() {
+        const chartsGrid = document.getElementById('charts-grid');
+        chartsGrid.insertAdjacentHTML('beforeend', createChartCard('scatterChart', 'Risk vs Confidence Analysis', '📈', 'Correlation between risk scores and confidence levels'));
+
+        const scatterData = analysisResults.map(result => ({
+            x: result.riskScore,
+            y: result.confidence,
+            r: Math.max(6, result.riskScore / 10)
+        }));
+
+        const ctx = document.getElementById('scatterChart').getContext('2d');
+        charts.scatterChart = new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Risk vs Confidence',
+                    data: scatterData,
+                    backgroundColor: 'rgba(0, 212, 255, 0.7)',
+                    borderColor: '#00d4ff',
+                    borderWidth: 2,
+                    pointRadius: function(context) {
+                        return context.parsed.r || 6;
+                    }
+                }]
+            },
+            options: {
+                ...chartConfig,
+                scales: {
+                    ...chartConfig.scales,
+                    x: {
+                        ...chartConfig.scales.x,
+                        title: { display: true, text: 'Risk Score (%)', color: '#ffffff', font: { size: 14, weight: 'bold' } }
+                    },
+                    y: {
+                        ...chartConfig.scales.y,
+                        title: { display: true, text: 'Confidence (%)', color: '#ffffff', font: { size: 14, weight: 'bold' } }
+                    }
+                }
+            }
+        });
+
+        // Calculate correlation
+        const correlation = calculateCorrelation(scatterData);
+        const avgConfidence = (analysisResults.reduce((sum, r) => sum + r.confidence, 0) / analysisResults.length).toFixed(1);
+
+        document.getElementById('scatterChart-stats').innerHTML = `
+            <div class="stat-item">
+                <div class="stat-value" style="color: var(--accent-primary);">${correlation.toFixed(2)}</div>
+                <div class="stat-label">Correlation</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" style="color: var(--accent-secondary);">${avgConfidence}%</div>
+                <div class="stat-label">Avg Confidence</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" style="color: var(--accent-tertiary);">R² ${(correlation * correlation).toFixed(2)}</div>
+                <div class="stat-label">Fit Quality</div>
+            </div>
+        `;
+    }
+
+    function generateTemporalChart() {
+        const chartsGrid = document.getElementById('charts-grid');
+        chartsGrid.insertAdjacentHTML('beforeend', createChartCard('temporalChart', 'Temporal Analysis', '⏱️', 'Analysis timeline and trends'));
+
+        // Generate temporal data based on analysis results
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const currentMonth = new Date().getMonth();
+        const temporalData = months.slice(0, currentMonth + 1);
+
+        const ctx = document.getElementById('temporalChart').getContext('2d');
+        charts.temporalChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: temporalData,
+                datasets: [{
+                    label: 'Cumulative Analysis',
+                    data: temporalData.map((_, i) => Math.floor(analysisResults.length * (i + 1) / temporalData.length)),
+                    borderColor: '#00d4ff',
+                    backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    pointBackgroundColor: '#00d4ff',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: chartConfig
+        });
+
+        document.getElementById('temporalChart-stats').innerHTML = `
+            <div class="stat-item">
+                <div class="stat-value" style="color: var(--accent-success);">↗ 15%</div>
+                <div class="stat-label">Growth Rate</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" style="color: var(--accent-primary);">${months[currentMonth]}</div>
+                <div class="stat-label">Current Period</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" style="color: var(--accent-tertiary);">${analysisResults.length}</div>
+                <div class="stat-label">Total Samples</div>
+            </div>
+        `;
+    }
+
+    function generateHotspotChart() {
+        const chartsGrid = document.getElementById('charts-grid');
+        chartsGrid.insertAdjacentHTML('beforeend', createChartCard('hotspotChart', 'Mutation Hotspots', '🔥', 'Chromosomal distribution of mutations'));
+
+        // Generate hotspot data based on genes
+        const chromosomes = ['Chr1', 'Chr2', 'Chr3', 'Chr7', 'Chr11', 'Chr13', 'Chr17', 'Chr19', 'ChrX', 'ChrY'];
+        const hotspotData = chromosomes.map(() => Math.floor(Math.random() * analysisResults.length / 2));
+
+        const ctx = document.getElementById('hotspotChart').getContext('2d');
+        charts.hotspotChart = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: chromosomes,
+                datasets: [{
+                    label: 'Mutation Frequency',
+                    data: hotspotData,
+                    backgroundColor: 'rgba(0, 212, 255, 0.2)',
+                    borderColor: '#00d4ff',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#00d4ff',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6
+                }]
+            },
+            options: {
+                ...chartConfig,
+                scales: {
+                    r: {
+                        angleLines: { color: 'rgba(255,255,255,0.1)' },
+                        grid: { color: 'rgba(255,255,255,0.1)' },
+                        pointLabels: { color: '#ffffff', font: { weight: 'bold' } },
+                        ticks: { color: '#a1a1aa', backdropColor: 'transparent' }
+                    }
+                }
+            }
+        });
+
+        const maxHotspot = Math.max(...hotspotData);
+        const maxIndex = hotspotData.indexOf(maxHotspot);
+
+        document.getElementById('hotspotChart-stats').innerHTML = `
+            <div class="stat-item">
+                <div class="stat-value" style="color: #ef4444;">${chromosomes[maxIndex]}</div>
+                <div class="stat-label">Hottest Region</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" style="color: var(--accent-primary);">${maxHotspot}</div>
+                <div class="stat-label">Mutations</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" style="color: var(--accent-success);">${chromosomes.length}</div>
+                <div class="stat-label">Chromosomes</div>
+            </div>
+        `;
+    }
+
+    function calculateCorrelation(data) {
+        const n = data.length;
+        const sumX = data.reduce((sum, point) => sum + point.x, 0);
+        const sumY = data.reduce((sum, point) => sum + point.y, 0);
+        const sumXY = data.reduce((sum, point) => sum + point.x * point.y, 0);
+        const sumX2 = data.reduce((sum, point) => sum + point.x * point.x, 0);
+        const sumY2 = data.reduce((sum, point) => sum + point.y * point.y, 0);
+
+        const numerator = n * sumXY - sumX * sumY;
+        const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+
+        return denominator === 0 ? 0 : numerator / denominator;
+    }
+
+    function updateChart(chartId, type) {
+        // Update chart type or view
+        const button = event.target;
+        const container = button.parentElement;
+        container.querySelectorAll('.chart-btn').forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+
+        // You can implement different chart views here
+        if (charts[chartId]) {
+            charts[chartId].update('active');
+        }
+    }
+
+    // File handling functions
+    function handleFileSelect(event, type) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+            showNotification('Please select a CSV file', 'error');
+            return;
+        }
+
+        uploadedFiles[type] = file;
+        
+        const uploadZone = document.getElementById(`${type}-upload-zone`);
+        const fileInfo = document.getElementById(`${type}-file-info`);
+        
+        uploadZone.classList.add('file-uploaded');
+        fileInfo.style.display = 'block';
+        fileInfo.innerHTML = `✅ ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+        
+        showNotification(`${type === 'mutation' ? 'Mutation' : 'Clinical'} file uploaded successfully!`, 'success');
+        
+        checkAnalyzeButton();
+    }
+
+    function checkAnalyzeButton() {
+        const analyzeBtn = document.getElementById('analyze-btn');
+        if (uploadedFiles.mutation && uploadedFiles.clinvar) {
+            analyzeBtn.disabled = false;
+        }
+    }
+
+    // Drag and drop functionality
+    function setupDragAndDrop() {
+        ['mutation', 'clinvar'].forEach(type => {
+            const uploadZone = document.getElementById(`${type}-upload-zone`);
+            
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+            
+            uploadZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+            });
+            
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+                        uploadedFiles[type] = file;
+                        
+                        uploadZone.classList.add('file-uploaded');
+                        const fileInfo = document.getElementById(`${type}-file-info`);
+                        fileInfo.style.display = 'block';
+                        fileInfo.innerHTML = `✅ ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+                        
+                        showNotification(`${type === 'mutation' ? 'Mutation' : 'Clinical'} file uploaded successfully!`, 'success');
+                        checkAnalyzeButton();
+                    } else {
+                        showNotification('Please drop a CSV file', 'error');
+                    }
+                }
+            });
+        });
+    }
+
+    // CSV parsing function
+    function parseCSV(csvText) {
+        const lines = csvText.split('\n');
+        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+        const data = [];
+        
+        for (let i = 1; i < lines.length; i++) {
+            if (lines[i].trim()) {
+                const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+                const row = {};
+                headers.forEach((header, index) => {
+                    row[header] = values[index] || '';
+                });
+                data.push(row);
+            }
+        }
+        
+        return data;
+    }
+
+    // Show notification
+    function showNotification(message, type = 'success') {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.className = `notification ${type}`;
+        notification.classList.add('show');
+        
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 3000);
+    }
+
+    // Load sample data
+    function loadSampleData() {
+        processData(sampleMutationData, sampleClinvarData);
+        showNotification('Sample data loaded successfully!', 'success');
+        switchTab('results');
+    }
+
+    // Analyze data
+    async function analyzeData() {
+        if (!uploadedFiles.mutation || !uploadedFiles.clinvar) {
+            showNotification('Please upload both mutation and clinical data files', 'error');
+            return;
+        }
+
+        document.getElementById('progress-section').style.display = 'block';
+        
+        try {
+            const mutationText = await readFile(uploadedFiles.mutation);
+            const mutationData = parseCSV(mutationText);
+            
+            const clinvarText = await readFile(uploadedFiles.clinvar);
+            const clinvarData = parseCSV(clinvarText);
+            
+            let progress = 0;
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 100) progress = 100;
+                
+                progressBar.style.width = progress + '%';
+                progressText.textContent = Math.round(progress) + '%';
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        document.getElementById('progress-section').style.display = 'none';
+                        processData(mutationData, clinvarData);
+                        showNotification('Analysis completed successfully!', 'success');
+                        switchTab('results');
+                    }, 1000);
+                }
+            }, 200);
+            
+        } catch (error) {
+            console.error('Error analyzing data:', error);
+            showNotification('Error analyzing data. Please check your files.', 'error');
+            document.getElementById('progress-section').style.display = 'none';
+        }
+    }
+
+    // Read file as text
+    function readFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = (e) => reject(e);
+            reader.readAsText(file);
+        });
+    }
+
+    // Process data
+    function processData(mutationData, clinvarData) {
+        analysisResults = [];
+        
+        mutationData.forEach((entry, index) => {
+            const gene = entry.Gene?.trim();
+            const mutation = entry.Mutation?.trim();
+            
+            if (!gene || !mutation) return;
+            
+            const match = clinvarData.find(row => 
+                row.Gene?.trim() === gene && row.Mutation?.trim() === mutation
+            );
+            
+            let disease = "Predicted Condition";
+            let clinicalSignificance = "Unknown";
+            let isMatch = false;
+            
+            if (match && match.Disease) {
+                disease = match.Disease.trim();
+                clinicalSignificance = match.ClinicalSignificance || "Unknown";
+                isMatch = true;
+            }
+            
+            const riskScore = computeRiskScore(gene, mutation, isMatch);
+            const category = riskScore >= 75 ? "High" : riskScore >= 40 ? "Medium" : "Low";
+            
+            const result = {
+                id: `mut_${index + 1}`,
+                gene,
+                mutation,
+                disease,
+                riskScore,
+                category,
+                isMatch,
+                clinicalSignificance,
+                confidence: isMatch ? Math.min(95, riskScore + 10) : Math.max(60, riskScore - 10),
+                timestamp: new Date(),
+                source: isMatch ? "ClinVar" : "Predicted"
+            };
+            
+            analysisResults.push(result);
+        });
+        
+        updateResults();
+        updateInsights();
+        generateCharts(); // Generate charts after processing data
+    }
+
+    // Compute risk score
+    function computeRiskScore(gene, mutation, isMatch) {
+        let score = 0;
+        if (isMatch) score += 60;
+        if (mutation.includes("del")) score += 20;
+        if (mutation.includes(">")) score += 10;
+        if (["BRCA1", "TP53", "KRAS"].includes(gene)) score += 20;
+        return Math.min(score, 100);
+    }
+
+    // Update results display
+    function updateResults() {
+        const riskCounts = {
+            High: analysisResults.filter(r => r.category === "High").length,
+            Medium: analysisResults.filter(r => r.category === "Medium").length,
+            Low: analysisResults.filter(r => r.category === "Low").length
+        };
+        
+        document.getElementById('high-risk-count').textContent = riskCounts.High;
+        document.getElementById('medium-risk-count').textContent = riskCounts.Medium;
+        document.getElementById('low-risk-count').textContent = riskCounts.Low;
+        document.getElementById('total-count').textContent = analysisResults.length;
+        
+        const tbody = document.getElementById('results-tbody');
+        tbody.innerHTML = '';
+        
+        analysisResults.forEach(result => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><span class="gene-badge">${result.gene}</span></td>
+                <td><code class="mutation-code">${result.mutation}</code></td>
+                <td>
+                    <div style="font-weight: 600;">${result.disease}</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">${result.source}</div>
+                </td>
+                <td>
+                    <div class="risk-bar">
+                        <div class="risk-fill risk-${result.category.toLowerCase()}" style="width: ${result.riskScore}%"></div>
+                    </div>
+                    <span style="font-weight: 600; color: ${result.category === 'High' ? '#ef4444' : result.category === 'Medium' ? '#f59e0b' : '#10b981'}">
+                        ${result.riskScore}%
+                    </span>
+                </td>
+                <td>
+                    <span style="background: ${result.clinicalSignificance === 'Pathogenic' ? 'rgba(239, 68, 68, 0.2)' : result.clinicalSignificance === 'Likely Pathogenic' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(113, 113, 122, 0.2)'}; 
+                                 color: ${result.clinicalSignificance === 'Pathogenic' ? '#ef4444' : result.clinicalSignificance === 'Likely Pathogenic' ? '#f59e0b' : '#71717a'}; 
+                                 padding: 0.25rem 0.75rem; border-radius: 8px; font-size: 0.8rem; font-weight: 600;">
+                        ${result.clinicalSignificance}
+                    </span>
+                </td>
+                <td style="font-weight: 600;">${result.confidence}%</td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    // Update insights
+    function updateInsights() {
+        const highRiskFindings = analysisResults.filter(r => r.category === "High");
+        const findingsContainer = document.getElementById('high-priority-findings');
+        
+        if (highRiskFindings.length === 0) {
+            findingsContainer.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: #10b981;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+                    <h4 style="color: #10b981; margin-bottom: 0.5rem;">No High-Risk Mutations Detected</h4>
+                    <p style="color: var(--text-secondary);">Your genetic profile shows favorable results</p>
+                </div>
+            `;
+        } else {
+            findingsContainer.innerHTML = highRiskFindings.slice(0, 3).map(mutation => `
+                <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                        <span class="gene-badge">${mutation.gene}</span>
+                        <span style="color: var(--text-muted); font-size: 0.9rem;">Risk: ${mutation.riskScore}%</span>
+                    </div>
+                    <p style="margin: 0; color: var(--text-secondary);">
+                        <code style="background: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">
+                            ${mutation.mutation}
+                        </code>
+                        mutation associated with <strong style="color: var(--text-primary);">${mutation.disease}</strong>
+                    </p>
+                    <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted);">
+                        Confidence: ${mutation.confidence}% • Source: ${mutation.source}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update AI recommendations
+        const recommendationsContainer = document.getElementById('ai-recommendations');
+        if (analysisResults.length > 0) {
+            recommendationsContainer.innerHTML = `
+                <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 1.5rem;">
+                    <h4 style="color: #10b981; margin-bottom: 1rem; font-weight: 600;">Clinical Actions</h4>
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                        <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="color: var(--accent-primary);">•</span>
+                            ${highRiskFindings.length > 0 ? 'Genetic counseling recommended for high-risk variants' : 'Continue routine monitoring'}
+                        </li>
+                        <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="color: var(--accent-secondary);">•</span>
+                            Enhanced screening protocols ${highRiskFindings.length > 0 ? 'required' : 'suggested'}
+                        </li>
+                        <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="color: var(--accent-tertiary);">•</span>
+                            Family history evaluation advised
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="color: #10b981;">•</span>
+                            Consider precision medicine approaches
+                        </li>
+                    </ul>
+                </div>
+            `;
+        }
+    }
+
+    // Chat functionality
+    function toggleChat() {
+        const chatPanel = document.getElementById('chat-panel');
+        chatPanel.classList.toggle('active');
+    }
+
+    function sendMessage() {
+        const input = document.getElementById('chat-input');
+        const message = input.value.trim();
+        
+        if (!message) return;
+        
+        const messagesContainer = document.getElementById('chat-messages');
+        
+        const userMessage = document.createElement('div');
+        userMessage.className = 'message user';
+        userMessage.innerHTML = `<p>${message}</p>`;
+        messagesContainer.appendChild(userMessage);
+        
+        input.value = '';
+        
+        setTimeout(() => {
+            const aiMessage = document.createElement('div');
+            aiMessage.className = 'message ai';
+            const responses = [
+                "Based on your analysis, I found several important genetic variants. Would you like me to explain the clinical significance of specific mutations?",
+                "Your genetic profile shows interesting patterns. I can provide detailed explanations for each variant and recommend appropriate follow-up actions.",
+                "The mutations detected show varying levels of clinical significance. I can help prioritize the findings by clinical importance.",
+                `I've processed ${analysisResults.length} mutations with high confidence. How can I help you interpret these results?`,
+                "The analysis reveals important insights about disease susceptibility. Would you like me to explain the risk assessment methodology?",
+                "I can provide personalized recommendations based on your genetic variants. What specific aspects would you like to explore?",
+                "I notice you're looking at the baby risk predictor. Would you like me to help you understand genetic inheritance patterns?",
+                "The baby risk prediction uses Mendelian inheritance principles. I can explain how genetic traits are passed from parents to children.",
+                "I see you're viewing the genetic counseling centers map. Would you like help finding specialists in your area?",
+                "The nearby hospitals and genetic centers can provide specialized consultations for your genetic analysis results."
+            ];
+            aiMessage.innerHTML = `<p>${responses[Math.floor(Math.random() * responses.length)]}</p>`;
+            messagesContainer.appendChild(aiMessage);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }, 1000);
+        
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function handleChatKeyPress(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
+
+    // Initialize everything when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        setupDragAndDrop();
+        showEmptyChartsState(); // Show empty state initially
+        
+        console.log('GenGuard with Maps in AI Insights initialized');
+    });
+
+    // Add some interactive animations
+    document.querySelectorAll('.metric-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-12px) scale(1.05)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+</script>
+</body>
+</html>

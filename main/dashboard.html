@@ -1,0 +1,126 @@
+<!--/admin/dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - GenGuard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen p-6">
+  <div class="max-w-7xl mx-auto space-y-8">
+    <header class="flex justify-between items-center">
+      <h1 class="text-3xl font-bold text-blue-700">🏥 Hospital Dashboard - Admin</h1>
+      <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">Logout</button>
+    </header>
+
+    <section class="bg-white p-6 rounded-lg shadow-lg">
+      <h2 class="text-xl font-semibold mb-4">📋 Patient Records</h2>
+      <table class="w-full text-left border">
+        <thead class="bg-blue-100">
+          <tr>
+            <th class="p-2">ID</th>
+            <th class="p-2">Name</th>
+            <th class="p-2">Age</th>
+            <th class="p-2">Contact</th>
+            <th class="p-2">Open Report</th>
+          </tr>
+        </thead>
+        <tbody id="patient-table">
+          <!-- Rows added via JS -->
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <script>
+    const patientTable = document.getElementById('patient-table');
+
+    // Always show three demo patients
+    const DEMO_PATIENTS = [
+      { id: 'P001', name: 'Ricky', age: 19, contact: '8767124028' },
+      { id: 'P002', name: 'Priya', age: 22, contact: '9876543210' },
+      { id: 'P003', name: 'Amit', age: 25, contact: '9123456780' }
+    ];
+
+    function loadPatients() {
+      patientTable.innerHTML = '';
+      DEMO_PATIENTS.forEach((p, i) => {
+        const reportFile = `../admin/patient${i+1}.html`;
+        const row = document.createElement('tr');
+        row.classList.add('border-b');
+        row.innerHTML = `
+          <td class="p-2 font-mono">${p.id}</td>
+          <td class="p-2">${p.name}</td>
+          <td class="p-2">${p.age}</td>
+          <td class="p-2">${p.contact}</td>
+          <td class="p-2">
+            <button onclick="window.open('${reportFile}', '_blank')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold">Open Report</button>
+          </td>
+        `;
+        patientTable.appendChild(row);
+      });
+    }
+
+    function logout() {
+      window.location.href = '/index.html';
+    }
+
+    loadPatients();
+  </script>
+</body>
+</html>
+        const reportFile = `../admin/patient${i+1}.html`;
+        const row = document.createElement('tr');
+        row.classList.add('border-b');
+        row.innerHTML = `
+          <td class="p-2 font-mono">${p.id}</td>
+          <td class="p-2">${p.name}</td>
+          <td class="p-2">${p.age}</td>
+          <td class="p-2">${p.contact}</td>
+          <td class="p-2 space-x-2">
+            <button onclick="analyzePatient(${i+1})" class="text-blue-600 underline">Analyze</button>
+            <button onclick="deletePatient(${i})" class="text-red-600 underline">Delete</button>
+          </td>
+          <td class="p-2">
+            <button onclick="window.open('${reportFile}', '_blank')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold">Open Report</button>
+          </td>
+        `;
+        patientTable.appendChild(row);
+      });
+    }
+
+    function analyzePatient(patientNum) {
+      // ...existing code or leave empty if not needed...
+    }
+
+    function addPatient(e) {
+      e.preventDefault();
+      const patients = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      const newPatient = {
+        id: document.getElementById('patientId').value,
+        name: document.getElementById('name').value,
+        age: document.getElementById('age').value,
+        contact: document.getElementById('contact').value
+      };
+      patients.push(newPatient);
+      localStorage.setItem(storageKey, JSON.stringify(patients));
+      loadPatients();
+      e.target.reset();
+    }
+
+    function deletePatient(index) {
+      const patients = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      patients.splice(index, 1);
+      localStorage.setItem(storageKey, JSON.stringify(patients));
+      loadPatients();
+    }
+
+    function logout() {
+      window.location.href = '/index.html';
+    }
+
+    loadPatients();
+  </script>
+</body>
+</html>
