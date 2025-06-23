@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My Google Map</title>
+    <style>
+      /* Full-screen map */
+      #map {
+        height: 100vh;
+        width: 100%;
+      }
+    </style>
+    <script>
+      function initMap() {
+        // Coordinates for Nagpur (you can change it)
+        const location = { lat: 21.1458, lng: 79.0882 };
+
+        const map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 12,
+          center: location,
+        });
+
+        // Add a marker
+        const marker = new google.maps.Marker({
+          position: location,
+          map: map,
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <!-- Google Maps API Script with YOUR_API_KEY placeholder -->
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA1WewNFnw6A4TD9_WKhhfxjHkGzBjFUEY&callback=initMap"
+      async
+      defer
+    ></script>
+  </body>
+</html>
