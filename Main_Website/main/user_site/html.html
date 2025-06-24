@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenGuard: Advanced DNA Mutation Analyzer</title>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .glass-morphism {
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .dark .glass-morphism {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .dark .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 100%);
+        }
+        
+        .animate-pulse-slow {
+            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        .hover-scale {
+            transition: transform 0.3s ease;
+        }
+        
+        .hover-scale:hover {
+            transform: scale(1.05);
+        }
+        
+        .floating-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+            background-size: 200% 200%;
+            animation: gradient 3s ease infinite;
+        }
+        
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .chat-message {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .risk-high { color: #ef4444; }
+        .risk-medium { color: #f59e0b; }
+        .risk-low { color: #10b981; }
+        
+        .tab-active {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+        }
+        
+        .file-drop-zone {
+            border: 2px dashed #6b7280;
+            transition: all 0.3s ease;
+        }
+        
+        .file-drop-zone:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+        
+        .dark .file-drop-zone {
+            border-color: #4b5563;
+        }
+        
+        .dark .file-drop-zone:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-blue-950 dark:to-purple-950 min-h-screen transition-all duration-500">
+    <!-- Header -->
+    <header class="glass-morphism sticky top-0 z-50 border-b border-slate-200/50 dark:border-slate-800/50">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="relative group">
+                        <div class="absolute -inset-1 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600"></div>
+                        <div class="relative">
+                            <i class="fas fa-dna text-4xl text-blue-400"></i>
+                            <div class="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full animate-pulse flex items-center justify-center">
+                                <div class="w-2 h-2 bg-white rounded-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-slate-900 dark:text-white">
+                            🧬 GenGuard
+                            <span class="text-lg font-normal ml-2 text-blue-600 dark:text-blue-300">
+                                Advanced DNA Analyzer
+                            </span>
+                        </h1>
+                        <p class="text-sm text-blue-600 dark:text-blue-300">
+                            AI-Powered Genomic Analysis Platform
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <label for="dark-mode" class="text-sm text-slate-800 dark:text-slate-200">Dark Mode</label>
+                        <input type="checkbox" id="dark-mode" class="toggle" onchange="toggleDarkMode()">
+                    </div>
+                    <div class="flex items-center space-x-2 px-3 py-1 rounded-full text-xs bg-green-500/20 text-green-400">
+                        <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                        <span class="font-medium">SYSTEM OPTIMAL</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-6 py-8">
+        <!-- Navigation Tabs -->
+        <div class="flex space-x-1 p-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-xl mb-8">
+            <button onclick="showTab('upload')" id="tab-upload" class="tab-button flex-1 px-6 py-3 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 tab-active">
+                <i class="fas fa-upload"></i>
+                <span>Upload Data</span>
+            </button>
+            <button onclick="showTab('results')" id="tab-results" class="tab-button flex-1 px-6 py-3 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 text-slate-600 dark:text-slate-400">
+                <i class="fas fa-chart-bar"></i>
+                <span>Results</span>
+            </button>
+            <button onclick="showTab('charts')" id="tab-charts" class="tab-button flex-1 px-6 py-3 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 text-slate-600 dark:text-slate-400">
+                <i class="fas fa-chart-pie"></i>
+                <span>Charts</span>
+            </button>
+            <button onclick="showTab('insights')" id="tab-insights" class="tab-button flex-1 px-6 py-3 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 text-slate-600 dark:text-slate-400">
+                <i class="fas fa-brain"></i>
+                <span>AI Insights</span>
+            </button>
+        </div>
+
+        <!-- Upload Tab -->
+        <div id="upload-tab" class="tab-content">
+            <!-- Hero Section -->
+            <div class="text-center space-y-6 py-12">
+                <div class="inline-flex items-center space-x-3 px-6 py-3 rounded-full border backdrop-blur-sm bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-300">
+                    <i class="fas fa-sparkles"></i>
+                    <span class="font-medium">Advanced DNA Mutation Analysis</span>
+                </div>
+                <h2 class="text-6xl font-bold leading-tight text-slate-900 dark:text-white">
+                    Upload Your
+                    <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">
+                        Genetic Data
+                    </span>
+                </h2>
+                <p class="text-xl max-w-3xl mx-auto text-slate-600 dark:text-slate-400">
+                    Upload your mutation data and clinical variant files for comprehensive genetic analysis
+                </p>
+            </div>
+
+            <!-- File Upload Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <div class="glass-morphism rounded-2xl p-8 hover-scale">
+                    <div class="flex items-center space-x-2 mb-4">
+                        <i class="fas fa-vial text-2xl text-blue-400"></i>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white">Mutation Data</h3>
+                    </div>
+                    <p class="text-slate-600 dark:text-slate-400 mb-6">
+                        Upload your mutations.csv file containing gene and mutation data
+                    </p>
+                    
+                    <div class="file-drop-zone rounded-xl p-8 text-center">
+                        <input type="file" id="mutationFile" accept=".csv" class="hidden" onchange="handleFileSelect('mutation', this)">
+                        <div class="space-y-4" onclick="document.getElementById('mutationFile').click()">
+                            <div class="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full flex items-center justify-center">
+                                <i class="fas fa-upload text-2xl text-blue-400"></i>
+                            </div>
+                            <div>
+                                <p class="text-lg font-semibold text-slate-900 dark:text-white" id="mutation-file-name">
+                                    Drop mutations.csv here
+                                </p>
+                                <p class="text-sm text-slate-600 dark:text-slate-400">
+                                    or click to browse
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-morphism rounded-2xl p-8 hover-scale">
+                    <div class="flex items-center space-x-2 mb-4">
+                        <i class="fas fa-flask text-2xl text-purple-400"></i>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white">Clinical Data</h3>
+                    </div>
+                    <p class="text-slate-600 dark:text-slate-400 mb-6">
+                        Upload your clinvar_data.csv file with clinical significance data
+                    </p>
+                    
+                    <div class="file-drop-zone rounded-xl p-8 text-center">
+                        <input type="file" id="clinvarFile" accept=".csv" class="hidden" onchange="handleFileSelect('clinvar', this)">
+                        <div class="space-y-4" onclick="document.getElementById('clinvarFile').click()">
+                            <div class="mx-auto w-16 h-16 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full flex items-center justify-center">
+                                <i class="fas fa-upload text-2xl text-purple-400"></i>
+                            </div>
+                            <div>
+                                <p class="text-lg font-semibold text-slate-900 dark:text-white" id="clinvar-file-name">
+                                    Drop clinvar_data.csv here
+                                </p>
+                                <p class="text-sm text-slate-600 dark:text-slate-400">
+                                    or click to browse
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis Progress -->
+            <div id="analysis-progress" class="glass-morphism rounded-2xl p-8 mb-8 hidden">
+                <div class="text-center space-y-6">
+                    <div class="inline-flex items-center space-x-3 px-6 py-3 rounded-full bg-blue-500/20 text-blue-300">
+                        <i class="fas fa-spinner animate-spin"></i>
+                        <span class="font-medium">Analyzing genetic variants...</span>
+                    </div>
+                    
+                    <div class="space-y-4 max-w-md mx-auto">
+                        <div class="flex justify-between items-center">
+                            <span class="font-medium text-slate-900 dark:text-white">Analysis Progress</span>
+                            <span class="font-mono text-lg text-blue-600 dark:text-blue-300" id="progress-text">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-4">
+                            <div class="progress-bar h-4 rounded-full transition-all duration-300" id="progress-bar" style="width: 0%"></div>
+                        </div>
+                        <div class="text-sm text-slate-600 dark:text-slate-400">
+                            Processing mutations, calculating risk scores, and matching with clinical data...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="analyzeData()" id="analyze-btn" class="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white font-semibold py-4 px-8 text-lg rounded-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 flex items-center justify-center space-x-3">
+                    <i class="fas fa-microscope"></i>
+                    <span>Analyze Mutations</span>
+                </button>
+                
+                <button onclick="loadSampleData()" class="border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-semibold py-4 px-8 text-lg rounded-xl transition-all duration-300 hover:scale-105 flex items-center justify-center space-x-3">
+                    <i class="fas fa-play"></i>
+                    <span>Try Sample Data</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Tab -->
+        <div id="results-tab" class="tab-content hidden">
+            <!-- Metrics Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="metrics-grid">
+                <!-- Metrics will be populated here -->
+            </div>
+
+            <!-- Results Table -->
+            <div id="analysis-results">
+                <div class="glass-morphism rounded-2xl p-8">
+                    <div class="flex items-center space-x-2 mb-6">
+                        <i class="fas fa-microscope text-2xl text-blue-400"></i>
+                        <h3 class="text-2xl font-bold text-slate-900 dark:text-white">🧪 Mutation Analysis Results</h3>
+                    </div>
+                    
+                    <!-- Search and Filter -->
+                    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                        <div class="flex items-center space-x-4">
+                            <div class="relative">
+                                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                                <input type="text" id="search-input" placeholder="Search genes, mutations..." class="pl-10 pr-4 py-2 w-80 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white" oninput="filterResults()">
+                            </div>
+                            
+                            <select id="filter-category" class="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white" onchange="filterResults()">
+                                <option value="all">All Categories</option>
+                                <option value="high">High Risk</option>
+                                <option value="medium">Medium Risk</option>
+                                <option value="low">Low Risk</option>
+                            </select>
+                        </div>
+                        
+                        <button class="flex items-center space-x-2 px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all duration-200">
+                            <i class="fas fa-download"></i>
+                            <span>Export Results</span>
+                        </button>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full" id="results-table">
+                            <thead>
+                                <tr class="border-b border-slate-200 dark:border-slate-700">
+                                    <th class="text-left p-4 font-semibold text-slate-700 dark:text-slate-300">Gene</th>
+                                    <th class="text-left p-4 font-semibold text-slate-700 dark:text-slate-300">Mutation</th>
+                                    <th class="text-left p-4 font-semibold text-slate-700 dark:text-slate-300">Disease</th>
+                                    <th class="text-left p-4 font-semibold text-slate-700 dark:text-slate-300">Risk Score</th>
+                                    <th class="text-left p-4 font-semibold text-slate-700 dark:text-slate-300">Clinical Significance</th>
+                                    <th class="text-left p-4 font-semibold text-slate-700 dark:text-slate-300">Confidence</th>
+                                </tr>
+                            </thead>
+                            <tbody id="results-tbody">
+                                <!-- Results will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Disease Forecast Timeline Section -->
+            <div id="disease-forecast" class="mt-8 p-6 bg-white dark:bg-slate-800 rounded-xl shadow-lg">
+                <h3 class="text-2xl font-bold mb-6 text-slate-900 dark:text-white flex items-center">
+                    <i class="fas fa-calendar-alt mr-3 text-blue-500"></i>
+                    Disease Forecast Timeline
+                </h3>
+                <div id="timeline-container" class="space-y-6">
+                    <!-- Timeline will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Tab -->
+        <div id="charts-tab" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="glass-morphism rounded-2xl p-8">
+                    <div class="flex items-center space-x-2 mb-6">
+                        <i class="fas fa-chart-bar text-xl text-blue-400"></i>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white">Gene-Mutation Risk Scores</h3>
+                    </div>
+                    <canvas id="barChart" width="400" height="300"></canvas>
+                </div>
+                
+                <div class="glass-morphism rounded-2xl p-8">
+                    <div class="flex items-center space-x-2 mb-6">
+                        <i class="fas fa-chart-pie text-xl text-purple-400"></i>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white">Disease Frequency</h3>
+                    </div>
+                    <canvas id="diseaseChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Insights Tab -->
+        <div id="insights-tab" class="tab-content hidden">
+            <div class="text-center space-y-4 py-8 mb-8">
+                <div class="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 text-purple-700 dark:text-purple-300">
+                    <i class="fas fa-brain"></i>
+                    <span>AI-Powered Insights</span>
+                </div>
+                <h2 class="text-4xl font-bold text-slate-900 dark:text-white">
+                    Intelligent Genetic Analysis
+                </h2>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8" id="insights-content">
+                <!-- AI insights will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Chat Button -->
+    <button id="chatbot-button" class="fixed bottom-8 right-8 w-20 h-20 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white flex items-center justify-center">
+        <i class="fas fa-comments text-2xl"></i>
+        <div class="absolute -top-1 -right-1 w-6 h-6 bg-green-400 rounded-full flex items-center justify-center">
+            <div class="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+        </div>
+    </button>
+
+    <!-- Chat Interface -->
+    <div id="chat-container" class="fixed bottom-32 right-8 w-96 h-96 glass-morphism rounded-2xl shadow-2xl hidden flex-col overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-600/20 to-purple-600/20 border-b border-slate-800/50 p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="relative">
+                        <i class="fas fa-brain text-2xl text-blue-400"></i>
+                        <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full flex items-center justify-center">
+                            <div class="w-2 h-2 bg-white rounded-full"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-bold text-white">AI Genetics Assistant</h4>
+                        <p class="text-sm text-slate-400">Advanced genomic analysis support</p>
+                    </div>
+                </div>
+                <button onclick="toggleChat()" class="text-slate-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4">
+            <div class="chat-message">
+                <div class="bg-slate-800/50 border border-slate-700/30 text-slate-200 p-4 rounded-2xl">
+                    <div class="flex items-start space-x-2">
+                        <i class="fas fa-brain text-blue-400 mt-1"></i>
+                        <div class="flex-1">
+                            <p>Welcome to GenGuard Advanced DNA Mutation Analyzer! I'm your AI genetics specialist. Upload your mutation and clinical data files to begin comprehensive analysis. How can I assist you today?</p>
+                            <p class="text-xs mt-2 opacity-70">Just now</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="border-t border-slate-800/50 p-4 flex space-x-3">
+            <input type="text" id="chat-input" placeholder="Ask about your genetic analysis..." class="flex-1 bg-slate-800/50 border border-slate-700 text-white placeholder:text-slate-400 px-4 py-2 rounded-lg" onkeypress="handleChatKeyPress(event)">
+            <button onclick="sendChatMessage()" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg transition-all duration-200">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let mutationData = [];
+        let clinvarData = [];
+        let analysisResults = [];
+        let isAnalyzing = false;
+        let isDarkMode = false;
+        let currentTab = 'upload';
+        
+        // Sample data
+        const sampleMutationData = [
+            { Gene: 'BRCA1', Mutation: 'c.68_69delAG' },
+            { Gene: 'TP53', Mutation: 'c.524G>A' },
+            { Gene: 'KRAS', Mutation: 'c.35G>A' },
+            { Gene: 'EGFR', Mutation: 'c.2573T>G' },
+            { Gene: 'PIK3CA', Mutation: 'c.3140A>G' },
+            { Gene: 'APC', Mutation: 'c.835-8A>G' },
+            { Gene: 'MLH1', Mutation: 'c.1852_1854del' },
+            { Gene: 'PALB2', Mutation: 'c.172_175del' }
+        ];
+        
+        const sampleClinvarData = [
+            { Gene: 'BRCA1', Mutation: 'c.68_69delAG', Disease: 'Hereditary Breast and Ovarian Cancer', ClinicalSignificance: 'Pathogenic' },
+            { Gene: 'TP53', Mutation: 'c.524G>A', Disease: 'Li-Fraumeni Syndrome', ClinicalSignificance: 'Pathogenic' },
+            { Gene: 'KRAS', Mutation: 'c.35G>A', Disease: 'Colorectal Cancer', ClinicalSignificance: 'Likely Pathogenic' },
+            { Gene: 'EGFR', Mutation: 'c.2573T>G', Disease: 'Non-Small Cell Lung Cancer', ClinicalSignificance: 'Uncertain Significance' },
+            { Gene: 'PIK3CA', Mutation: 'c.3140A>G', Disease: 'Breast Cancer', ClinicalSignificance: 'Likely Pathogenic' },
+            { Gene: 'MLH1', Mutation: 'c.1852_1854del', Disease: 'Lynch Syndrome', ClinicalSignificance: 'Pathogenic' },
+            { Gene: 'PALB2', Mutation: 'c.172_175del', Disease: 'Hereditary Breast Cancer', ClinicalSignificance: 'Pathogenic' }
+        ];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set initial dark mode state
+            const darkModeToggle = document.getElementById('dark-mode');
+            darkModeToggle.checked = isDarkMode;
+            
+            // Chat button event
+            document.getElementById('chatbot-button').addEventListener('click', toggleChat);
+            
+            // --- Multi-user support: filter by selectedUserId if present ---
+            function getSelectedUserMutations() {
+                // 1. Try localStorage (from admin dashboard)
+                const userId = localStorage.getItem('selectedUserId') || (new URLSearchParams(window.location.search)).get('patientId');
+                if (userId && localStorage.getItem('selectedUserMutations')) {
+                    try {
+                        return JSON.parse(localStorage.getItem('selectedUserMutations'));
+                    } catch { return null; }
+                }
+                return null;
+            }
+
+            // On load, if selectedUserId is present, use only that user's mutations
+            const userMutations = getSelectedUserMutations();
+            if (userMutations) {
+                // Use only this user's mutations, and clear after use
+                mutationData = userMutations.map(m => ({ Gene: m.gene, Mutation: m.mutation }));
+                clinvarData = sampleClinvarData; // Or load real clinvar data if available
+                processData(mutationData, clinvarData);
+                // Optionally clear so next patient doesn't get wrong data
+                // localStorage.removeItem('selectedUserId');
+                // localStorage.removeItem('selectedUserMutations');
+            }
+        });
+
+        // Dark mode toggle
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            document.documentElement.classList.toggle('dark', isDarkMode);
+        }
+
+        // Tab navigation
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('tab-active');
+                btn.classList.add('text-slate-600', 'dark:text-slate-400');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.remove('hidden');
+            
+            // Add active class to selected tab button
+            const activeBtn = document.getElementById('tab-' + tabName);
+            activeBtn.classList.add('tab-active');
+            activeBtn.classList.remove('text-slate-600', 'dark:text-slate-400');
+            
+            currentTab = tabName;
+        }
+
+        // File selection handler
+        function handleFileSelect(type, input) {
+            const file = input.files[0];
+            if (file) {
+                const nameElement = document.getElementById(type + '-file-name');
+                nameElement.textContent = file.name;
+                
+                if (type === 'mutation') {
+                    mutationData = file;
+                } else {
+                    clinvarData = file;
+                }
+            }
+        }
+
+        // Load sample data
+        function loadSampleData() {
+            mutationData = sampleMutationData;
+            clinvarData = sampleClinvarData;
+            
+            document.getElementById('mutation-file-name').textContent = 'sample-mutations.csv (loaded)';
+            document.getElementById('clinvar-file-name').textContent = 'sample-clinvar.csv (loaded)';
+            
+            processData(mutationData, clinvarData);
+        }
+
+        // Analyze uploaded data
+        function analyzeData() {
+            if (!mutationData || !clinvarData) {
+                alert('Please upload both mutation and clinical data files.');
+                return;
+            }
+
+            if (mutationData instanceof File) {
+                // Parse uploaded files
+                parseFiles();
+            } else {
+                // Use sample data
+                processData(mutationData, clinvarData);
+            }
+        }
+
+        // Parse CSV files
+        function parseFiles() {
+            isAnalyzing = true;
+            document.getElementById('analysis-progress').classList.remove('hidden');
+            document.getElementById('analyze-btn').disabled = true;
+            
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 10;
+                document.getElementById('progress-bar').style.width = progress + '%';
+                document.getElementById('progress-text').textContent = progress + '%';
+                
+                if (progress >= 90) {
+                    clearInterval(progressInterval);
+                    
+                    // Parse mutation file
+                    Papa.parse(mutationData, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: function(results) {
+                            const parsedMutationData = results.data;
+                            
+                            // Parse clinvar file
+                            Papa.parse(clinvarData, {
+                                header: true,
+                                skipEmptyLines: true,
+                                complete: function(results2) {
+                                    const parsedClinvarData = results2.data;
+                                    processData(parsedMutationData, parsedClinvarData);
+                                }
+                            });
+                        }
+                    });
+                }
+            }, 200);
+        }
+
+        // Process data and generate results
+        function processData(mutationData, clinvarData) {
+            const startTime = Date.now();
+            analysisResults = [];
+            const diseaseCounts = {};
+            const riskCounts = { High: 0, Medium: 0, Low: 0 };
+            const labels = [];
+            const riskScores = [];
+
+            mutationData.forEach((entry, index) => {
+                const gene = entry.Gene?.trim();
+                const mutation = entry.Mutation?.trim();
+                
+                if (!gene || !mutation) return;
+
+                const match = clinvarData.find(row => 
+                    row.Gene?.trim() === gene && row.Mutation?.trim() === mutation
+                );
+                
+                let disease = "Predicted Condition";
+                let clinicalSignificance = "Unknown";
+                let isMatch = false;
+
+                if (match && match.Disease) {
+                    disease = match.Disease.trim();
+                    clinicalSignificance = match.ClinicalSignificance || "Unknown";
+                    isMatch = true;
+                }
+
+                const riskScore = computeRiskScore(gene, mutation, isMatch);
+                const category = riskScore >= 75 ? "High" : riskScore >= 40 ? "Medium" : "Low";
+
+                riskCounts[category]++;
+                diseaseCounts[disease] = (diseaseCounts[disease] || 0) + 1;
+
+                const result = {
+                    id: `mut_${index + 1}`,
+                    gene,
+                    mutation,
+                    disease,
+                    riskScore,
+                    category,
+                    isMatch,
+                    clinicalSignificance,
+                    confidence: isMatch ? Math.min(95, riskScore + 10) : Math.max(60, riskScore - 10),
+                    timestamp: new Date(),
+                    source: isMatch ? "ClinVar" : "Predicted"
+                };
+
+                analysisResults.push(result);
+                labels.push(`${gene}-${mutation}`);
+                riskScores.push(riskScore);
+            });
+
+            const processingTime = Date.now() - startTime;
+
+            // Update UI
+            updateMetrics(riskCounts, analysisResults, processingTime);
+            updateResultsTable(analysisResults);
+            updateCharts(labels, riskScores, diseaseCounts);
+            updateInsights(analysisResults);
+            
+            // Complete analysis
+            document.getElementById('progress-bar').style.width = '100%';
+            document.getElementById('progress-text').textContent = '100%';
+            
+            setTimeout(() => {
+                isAnalyzing = false;
+                document.getElementById('analysis-progress').classList.add('hidden');
+                document.getElementById('analyze-btn').disabled = false;
+                showTab('results');
+            }, 1000);
+        }
+
+        // Compute risk score
+        function computeRiskScore(gene, mutation, isMatch) {
+            let score = 0;
+            if (isMatch) score += 60;
+            if (mutation.includes("del")) score += 20;
+            if (mutation.includes(">")) score += 10;
+            if (["BRCA1", "TP53", "KRAS"].includes(gene)) score += 20;
+            return Math.min(score, 100);
+        }
+
+        // Update metrics display
+        function updateMetrics(riskCounts, results, processingTime) {
+            const totalMutations = results.length;
+            const averageRisk = Math.round(results.reduce((sum, r) => sum + r.riskScore, 0) / totalMutations);
+            const confidenceScore = Math.round(results.reduce((sum, r) => sum + r.confidence, 0) / totalMutations);
+
+            const metricsHTML = `
+                <div class="glass-morphism rounded-2xl p-6 hover-scale bg-gradient-to-br from-red-50 to-red-100 dark:from-red-500/10 dark:to-red-600/5 border-red-200 dark:border-red-500/20">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium uppercase tracking-wide text-red-600 dark:text-red-400">High Risk</p>
+                            <p class="text-4xl font-bold mt-2 text-red-700 dark:text-red-300">${riskCounts.High}</p>
+                        </div>
+                        <i class="fas fa-exclamation-triangle text-3xl text-red-600 dark:text-red-400"></i>
+                    </div>
+                </div>
+                
+                <div class="glass-morphism rounded-2xl p-6 hover-scale bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-500/10 dark:to-yellow-600/5 border-yellow-200 dark:border-yellow-500/20">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium uppercase tracking-wide text-yellow-600 dark:text-yellow-400">Medium Risk</p>
+                            <p class="text-4xl font-bold mt-2 text-yellow-700 dark:text-yellow-300">${riskCounts.Medium}</p>
+                        </div>
+                        <i class="fas fa-chart-line text-3xl text-yellow-600 dark:text-yellow-400"></i>
+                    </div>
+                </div>
+                
+                <div class="glass-morphism rounded-2xl p-6 hover-scale bg-gradient-to-br from-green-50 to-green-100 dark:from-green-500/10 dark:to-green-600/5 border-green-200 dark:border-green-500/20">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium uppercase tracking-wide text-green-600 dark:text-green-400">Low Risk</p>
+                            <p class="text-4xl font-bold mt-2 text-green-700 dark:text-green-300">${riskCounts.Low}</p>
+                        </div>
+                        <i class="fas fa-shield-alt text-3xl text-green-600 dark:text-green-400"></i>
+                    </div>
+                </div>
+                
+                <div class="glass-morphism rounded-2xl p-6 hover-scale bg-gradient-to-br from-blue-50 to-purple-100 dark:from-blue-500/10 dark:to-purple-600/5 border-blue-200 dark:border-blue-500/20">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium uppercase tracking-wide text-blue-600 dark:text-blue-400">Avg Confidence</p>
+                            <p class="text-4xl font-bold mt-2 text-blue-700 dark:text-blue-300">${confidenceScore}%</p>
+                        </div>
+                        <i class="fas fa-brain text-3xl text-blue-600 dark:text-blue-400"></i>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('metrics-grid').innerHTML = metricsHTML;
+        }
+
+        // Update results table
+        function updateResultsTable(results) {
+            const tbody = document.getElementById('results-tbody');
+            tbody.innerHTML = '';
+
+            results.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-700/20 transition-all duration-200';
+                
+                const riskClass = item.riskScore >= 75 ? 'risk-high' : item.riskScore >= 40 ? 'risk-medium' : 'risk-low';
+                const categoryColor = item.category === 'High' ? 'bg-red-400' : item.category === 'Medium' ? 'bg-yellow-400' : 'bg-green-400';
+                
+                row.innerHTML = `
+                    <td class="p-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-3 h-3 rounded-full ${categoryColor}"></div>
+                            <span class="font-mono font-bold text-lg text-blue-600 dark:text-blue-300">${item.gene}</span>
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <code class="px-3 py-2 rounded-lg text-sm font-mono bg-slate-100 dark:bg-slate-800/50 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+                            ${item.mutation}
+                        </code>
+                    </td>
+                    <td class="p-4 text-slate-800 dark:text-slate-200">
+                        <div class="max-w-xs">
+                            <p class="font-medium">${item.disease}</p>
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-24 bg-slate-200 dark:bg-slate-700 rounded-full h-3">
+                                <div class="h-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" style="width: ${item.riskScore}%"></div>
+                            </div>
+                            <span class="font-bold text-lg min-w-[4rem] ${riskClass}">${item.riskScore}%</span>
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <span class="px-3 py-1 rounded-full text-xs font-medium border ${
+                            item.clinicalSignificance === 'Pathogenic' 
+                                ? 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-300'
+                                : item.clinicalSignificance === 'Likely Pathogenic'
+                                    ? 'bg-orange-50 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/30 text-orange-700 dark:text-orange-300'
+                                    : 'bg-slate-50 dark:bg-slate-500/10 border-slate-200 dark:border-slate-500/30 text-slate-700 dark:text-slate-300'
+                        }">
+                            ${item.clinicalSignificance}
+                        </span>
+                    </td>
+                    <td class="p-4">
+                        <span class="font-mono text-slate-700 dark:text-slate-300">${item.confidence}%</span>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // Update charts
+        function updateCharts(labels, riskScores, diseaseCounts) {
+            // Risk scores bar chart
+            const barCtx = document.getElementById('barChart').getContext('2d');
+            new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Risk Score (%)',
+                        data: riskScores,
+                        backgroundColor: labels.map(label => 
+                            label.includes('BRCA') || label.includes('TP53') ? '#ef4444' : 
+                            label.includes('KRAS') ? '#f59e0b' : '#3b82f6'
+                        ),
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw}% risk`;
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Gene-Mutation vs Risk Score',
+                            font: { size: 16 },
+                            color: isDarkMode ? '#e2e8f0' : '#1e293b'
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            ticks: { 
+                                autoSkip: false, 
+                                maxRotation: 60, 
+                                minRotation: 30,
+                                color: isDarkMode ? '#94a3b8' : '#64748b'
+                            },
+                            grid: {
+                                color: isDarkMode ? '#334155' : '#e2e8f0'
+                            }
+                        },
+                        y: { 
+                            beginAtZero: true, 
+                            max: 100, 
+                            title: { 
+                                display: true, 
+                                text: 'Risk (%)',
+                                color: isDarkMode ? '#e2e8f0' : '#1e293b'
+                            },
+                            ticks: {
+                                color: isDarkMode ? '#94a3b8' : '#64748b'
+                            },
+                            grid: {
+                                color: isDarkMode ? '#334155' : '#e2e8f0'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Disease frequency chart
+            const diseaseCtx = document.getElementById('diseaseChart').getContext('2d');
+            new Chart(diseaseCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(diseaseCounts),
+                    datasets: [{
+                        label: 'Disease Frequency',
+                        data: Object.values(diseaseCounts),
+                        backgroundColor: [
+                            '#ef4444', '#f59e0b', '#10b981', '#3b82f6', 
+                            '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'
+                        ],
+                        borderWidth: 2,
+                        borderColor: isDarkMode ? '#1e293b' : '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Disease Occurrence Frequency',
+                            font: { size: 16 },
+                            color: isDarkMode ? '#e2e8f0' : '#1e293b'
+                        },
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: isDarkMode ? '#94a3b8' : '#64748b',
+                                padding: 20
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update AI insights
+        function updateInsights(results) {
+            const highRiskMutations = results.filter(r => r.category === 'High');
+            
+            const insightsHTML = `
+                <div class="glass-morphism rounded-2xl p-8 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-500/10 dark:to-pink-500/5 border-purple-200 dark:border-purple-500/20">
+                    <div class="flex items-center space-x-2 mb-6">
+                        <i class="fas fa-exclamation-triangle text-xl text-red-400"></i>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white">High Priority Findings</h3>
+                    </div>
+                    <div class="space-y-4">
+                        ${highRiskMutations.slice(0, 3).map(mutation => `
+                            <div class="p-4 rounded-lg bg-white/50 dark:bg-slate-800/50">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30">
+                                        ${mutation.gene}
+                                    </span>
+                                    <span class="text-sm text-slate-600 dark:text-slate-400">
+                                        Risk: ${mutation.riskScore}%
+                                    </span>
+                                </div>
+                                <p class="text-sm text-slate-700 dark:text-slate-300">
+                                    ${mutation.mutation} mutation associated with ${mutation.disease}
+                                </p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div class="glass-morphism rounded-2xl p-8 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-500/10 dark:to-cyan-500/5 border-blue-200 dark:border-blue-500/20">
+                    <div class="flex items-center space-x-2 mb-6">
+                        <i class="fas fa-lightbulb text-xl text-blue-400"></i>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white">AI Recommendations</h3>
+                    </div>
+                    <div class="p-4 rounded-lg bg-white/50 dark:bg-slate-800/50">
+                        <h4 class="font-semibold mb-2 text-green-600 dark:text-green-300">Clinical Actions</h4>
+                        <ul class="space-y-1 text-sm">
+                            <li class="text-slate-700 dark:text-slate-300">• Genetic counseling recommended for high-risk variants</li>
+                            <li class="text-slate-700 dark:text-slate-300">• Enhanced screening protocols suggested</li>
+                            <li class="text-slate-700 dark:text-slate-300">• Family history evaluation advised</li>
+                            <li class="text-slate-700 dark:text-slate-300">• Consider precision medicine approaches</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('insights-content').innerHTML = insightsHTML;
+        }
+
+        // Filter results
+        function filterResults() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const categoryFilter = document.getElementById('filter-category').value;
+            
+            const filteredResults = analysisResults.filter(item => {
+                const matchesSearch = searchTerm === '' ||
+                    item.gene.toLowerCase().includes(searchTerm) ||
+                    item.disease.toLowerCase().includes(searchTerm) ||
+                    item.mutation.toLowerCase().includes(searchTerm);
+                
+                const matchesCategory = categoryFilter === 'all' || 
+                    item.category.toLowerCase() === categoryFilter;
+                
+                return matchesSearch && matchesCategory;
+            });
+            
+            updateResultsTable(filteredResults);
+        }
+
+        // Chat functionality
+        function toggleChat() {
+            const chatContainer = document.getElementById('chat-container');
+            const chatButton = document.getElementById('chatbot-button');
+            
+            if (chatContainer.classList.contains('hidden')) {
+                chatContainer.classList.remove('hidden');
+                chatContainer.classList.add('flex');
+                chatButton.innerHTML = '<i class="fas fa-times text-2xl"></i>';
+                chatButton.className = chatButton.className.replace('from-blue-600 to-purple-600', 'from-red-500 to-pink-500');
+            } else {
+                chatContainer.classList.add('hidden');
+                chatContainer.classList.remove('flex');
+                chatButton.innerHTML = '<i class="fas fa-comments text-2xl"></i><div class="absolute -top-1 -right-1 w-6 h-6 bg-green-400 rounded-full flex items-center justify-center"><div class="w-3 h-3 bg-white rounded-full animate-pulse"></div></div>';
+                chatButton.className = chatButton.className.replace('from-red-500 to-pink-500', 'from-blue-600 to-purple-600');
+            }
+        }
+
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendChatMessage();
+            }
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addChatMessage(message, true);
+            input.value = '';
+            
+            // Simulate AI response
+            setTimeout(() => {
+                const responses = [
+                    "Based on your analysis, I found several high-risk mutations including BRCA1 and TP53 variants. These require immediate genetic counseling and enhanced screening protocols.",
+                    "Your genetic profile shows pathogenic variants in cancer susceptibility genes. I recommend discussing targeted therapy options with your healthcare provider.",
+                    "The analysis identified mutations with clinical significance. Would you like me to explain the specific implications of each variant found in your data?",
+                    `I've processed ${analysisResults.length} mutations with high confidence. The data quality is excellent. How can I help you interpret these results?`
+                ];
+                
+                const response = responses[Math.floor(Math.random() * responses.length)];
+                addChatMessage(response, false);
+            }, 1000);
+        }
+
+        function addChatMessage(message, isUser) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message';
+            
+            const timestamp = new Date().toLocaleTimeString();
+            
+            if (isUser) {
+                messageDiv.innerHTML = `
+                    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-2xl ml-8">
+                        <p>${message}</p>
+                        <p class="text-xs mt-2 opacity-70">${timestamp}</p>
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="bg-slate-800/50 border border-slate-700/30 text-slate-200 p-4 rounded-2xl mr-8">
+                        <div class="flex items-start space-x-2">
+                            <i class="fas fa-brain text-blue-400 mt-1"></i>
+                            <div class="flex-1">
+                                <p>${message}</p>
+                                <p class="text-xs mt-2 opacity-70">${timestamp}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Helper: Get patient info from query string
+        function getPatientInfo() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                id: params.get('patientId') || '',
+                name: params.get('name') || '',
+                age: params.get('age') || '',
+                contact: params.get('contact') || ''
+            };
+        }
+
+        // Helper: Format date
+        function formatDate(date) {
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        }
+
+        // Enhanced PDF export
+        function generateDetailedPDF() {
+            if (!analysisResults.length) return;
+
+            const patient = getPatientInfo();
+            const now = new Date();
+
+            // Build HTML for PDF
+            let html = `
+                <div style="font-family: 'Inter', Arial, sans-serif; padding: 32px; color: #222;">
+                    <div style="text-align: center; margin-bottom: 32px;">
+                        <img src="https://cdn-icons-png.flaticon.com/512/616/616494.png" width="64" style="margin-bottom: 8px;" />
+                        <h1 style="font-size: 2.2rem; color: #3b82f6; margin: 0;">GenGuard DNA Mutation Analysis Report</h1>
+                        <div style="font-size: 1.1rem; color: #6366f1; margin-bottom: 8px;">AI-Powered Genomic Insights</div>
+                        <div style="font-size: 0.95rem; color: #888;">Generated: ${formatDate(now)}</div>
+                    </div>
+                    <hr style="margin: 24px 0;">
+                    <div style="margin-bottom: 18px;">
+                        <h2 style="font-size: 1.2rem; color: #4f46e5; margin-bottom: 6px;">Patient Information</h2>
+                        <table style="width: 100%; font-size: 1rem;">
+                            <tr>
+                                <td><b>ID:</b></td>
+                                <td>${patient.id || '-'}</td>
+                                <td><b>Name:</b></td>
+                                <td>${patient.name || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td><b>Age:</b></td>
+                                <td>${patient.age || '-'}</td>
+                                <td><b>Contact:</b></td>
+                                <td>${patient.contact || '-'}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div style="margin-bottom: 18px;">
+                        <h2 style="font-size: 1.2rem; color: #4f46e5; margin-bottom: 6px;">Summary Metrics</h2>
+                        <table style="width: 100%; font-size: 1rem; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 4px 8px;"><b>Total Mutations:</b></td>
+                                <td style="padding: 4px 8px;">${analysisResults.length}</td>
+                                <td style="padding: 4px 8px;"><b>High Risk:</b></td>
+                                <td style="padding: 4px 8px; color: #ef4444;">${analysisResults.filter(r=>r.category==='High').length}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px 8px;"><b>Medium Risk:</b></td>
+                                <td style="padding: 4px 8px; color: #f59e0b;">${analysisResults.filter(r=>r.category==='Medium').length}</td>
+                                <td style="padding: 4px 8px;"><b>Low Risk:</b></td>
+                                <td style="padding: 4px 8px; color: #10b981;">${analysisResults.filter(r=>r.category==='Low').length}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div style="margin-bottom: 18px;">
+                        <h2 style="font-size: 1.2rem; color: #4f46e5; margin-bottom: 6px;">Mutation Analysis Results</h2>
+                        <table style="width: 100%; font-size: 0.95rem; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #e0e7ff;">
+                                    <th style="padding: 6px; border: 1px solid #c7d2fe;">Gene</th>
+                                    <th style="padding: 6px; border: 1px solid #c7d2fe;">Mutation</th>
+                                    <th style="padding: 6px; border: 1px solid #c7d2fe;">Disease</th>
+                                    <th style="padding: 6px; border: 1px solid #c7d2fe;">Risk</th>
+                                    <th style="padding: 6px; border: 1px solid #c7d2fe;">Clinical Significance</th>
+                                    <th style="padding: 6px; border: 1px solid #c7d2fe;">Confidence</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${analysisResults.map(r => `
+                                    <tr>
+                                        <td style="padding: 6px; border: 1px solid #c7d2fe; font-weight: bold; color: #2563eb;">${r.gene}</td>
+                                        <td style="padding: 6px; border: 1px solid #c7d2fe;">${r.mutation}</td>
+                                        <td style="padding: 6px; border: 1px solid #c7d2fe;">${r.disease}</td>
+                                        <td style="padding: 6px; border: 1px solid #c7d2fe; color: ${
+                                            r.category === 'High' ? '#ef4444' : r.category === 'Medium' ? '#f59e0b' : '#10b981'
+                                        };">${r.riskScore}%</td>
+                                        <td style="padding: 6px; border: 1px solid #c7d2fe;">${r.clinicalSignificance}</td>
+                                        <td style="padding: 6px; border: 1px solid #c7d2fe;">${r.confidence}%</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top: 32px; text-align: center; color: #64748b; font-size: 0.95rem;">
+                        <b>GenGuard</b> &copy; ${now.getFullYear()} &mdash; AI-Powered DNA Mutation Analyzer
+                    </div>
+                </div>
+            `;
+
+            const opt = {
+                margin:       0,
+                filename:     `GenGuard_Report_${patient.id || 'patient'}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(html).save();
+        }
+
+        // Enable/disable PDF button based on results
+        function updatePdfButtonState() {
+            const btn = document.getElementById('downloadPdf');
+            btn.disabled = !analysisResults.length;
+        }
+
+        // Attach PDF export event
+        document.getElementById('downloadPdf').addEventListener('click', generateDetailedPDF);
+
+        // Update PDF button state after results are processed
+        const origUpdateResultsTable = updateResultsTable;
+        updateResultsTable = function(results) {
+            origUpdateResultsTable(results);
+            updatePdfButtonState();
+        };
+
+        async function loadDiseaseForecast(detectedGenes) {
+            const response = await fetch('/data/mutation_disease_forecast.csv');
+            const csvText = await response.text();
+            
+            Papa.parse(csvText, {
+                header: true,
+                complete: function(results) {
+                    const forecasts = results.data.filter(row => 
+                        detectedGenes.includes(row.Gene)
+                    );
+                    
+                    const timelineContainer = document.getElementById('timeline-container');
+                    timelineContainer.innerHTML = '';
+                    
+                    forecasts.forEach(forecast => {
+                        const riskClass = getRiskClass(parseFloat(forecast['Risk (%)']));
+                        const timelineItem = `
+                            <div class="flex items-center space-x-4 p-4 bg-slate-50 dark:bg-slate-700 rounded-lg hover:shadow-md transition-all">
+                                <div class="w-24 text-center">
+                                    <span class="text-lg font-bold text-blue-600 dark:text-blue-300">Age ${forecast['Age Start']}</span>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between">
+                                        <h4 class="text-lg font-semibold text-slate-900 dark:text-white">${forecast.Disease}</h4>
+                                        <span class="text-lg font-bold ${riskClass}">${forecast['Risk (%)']}% Risk</span>
+                                    </div>
+                                    <p class="text-slate-600 dark:text-slate-400 mt-1">${forecast.Advice}</p>
+                                    <div class="mt-2 w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2">
+                                        <div class="h-2 rounded-full progress-bar" style="width: ${forecast['Risk (%)']}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        timelineContainer.innerHTML += timelineItem;
+                    });
+                }
+            });
+        }
+
+        function getRiskClass(risk) {
+            if (risk >= 50) return 'risk-high';
+            if (risk >= 25) return 'risk-medium';
+            return 'risk-low';
+        }
+
+        // Modify the existing analyzeMutations function to include forecast
+        const originalAnalyzeMutations = analyzeMutations;
+        analyzeMutations = function(mutations) {
+            originalAnalyzeMutations(mutations);
+            const detectedGenes = Array.from(new Set(mutations.map(m => m.Gene || m.gene)));
+            loadDiseaseForecast(detectedGenes);
+        }
+    </script>
+</body>
+</html>

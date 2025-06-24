@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GenGuard Access Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-gray-900 flex items-center justify-center px-4 relative overflow-hidden">
+  
+  <!-- Animated DNA Background -->
+  <div class="absolute inset-0 opacity-10">
+    <div class="dna-strand"></div>
+    <div class="dna-strand-2"></div>
+  </div>
+  
+  <!-- Floating Particles -->
+  <div class="particles">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+  </div>
+
+  <div class="text-center space-y-8 p-10 bg-gray-800/30 backdrop-blur-lg rounded-3xl shadow-2xl border border-gray-700/50 max-w-2xl w-full animate-fade-in relative z-10">
+    
+    <!-- Logo & Title -->
+    <div class="space-y-4">
+      <div class="text-6xl animate-pulse-slow">🧬</div>
+      <h1 class="text-5xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+        GenGuard
+      </h1>
+      <div class="h-1 w-32 bg-gradient-to-r from-cyan-400 to-purple-400 mx-auto rounded-full"></div>
+    </div>
+    
+    <!-- Subtitle -->
+    <div class="space-y-2">
+      <p class="text-xl text-gray-300 font-medium">Secure DNA Analysis & Forecasting Portal</p>
+      <p class="text-sm text-gray-400">Choose your access level to continue</p>
+    </div>
+    
+    <!-- Login Cards -->
+    <div class="grid md:grid-cols-2 gap-6 mt-12">
+      
+      <!-- Personal Login Card -->
+      <a href="http://127.0.0.1:5500/CIH-Hackthon-main/main/user_site/html.html" class="group relative overflow-hidden">
+        <div class="bg-gradient-to-br from-purple-600/20 to-pink-600/20 backdrop-blur-sm border border-purple-500/30 rounded-2xl p-8 hover:border-purple-400/60 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/25">
+          <div class="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">👤</div>
+          <h3 class="text-xl font-bold text-white mb-2">Personal Access</h3>
+          <p class="text-gray-300 text-sm mb-4">Upload and view your genetic analysis reports</p>
+          <div class="flex items-center text-purple-400 font-medium">
+            <span>Enter Portal</span>
+            <svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </div>
+        </div>
+      </a>
+
+      <!-- Admin Login Card -->
+      <a href="http://localhost:5000/login.html" class="group relative overflow-hidden">
+        <div class="bg-gradient-to-br from-cyan-600/20 to-blue-600/20 backdrop-blur-sm border border-cyan-500/30 rounded-2xl p-8 hover:border-cyan-400/60 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-cyan-500/25">
+          <div class="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">🏥</div>
+          <h3 class="text-xl font-bold text-white mb-2">Admin Access</h3>
+          <p class="text-gray-300 text-sm mb-4">Manage and analyze patient genetic data</p>
+          <div class="flex items-center text-cyan-400 font-medium">
+            <span>Enter Portal</span>
+            <svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Security Badge -->
+    <div class="flex items-center justify-center space-x-2 text-gray-400 text-sm mt-8">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+      </svg>
+      <span>End-to-end encrypted • HIPAA compliant</span>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-xs text-gray-500 mt-6 pt-6 border-t border-gray-700/50">
+      Built with ❤️ at CIH Hackathon • Powered by Advanced Genomics AI
+    </div>
+  </div>
+
+  <!-- Custom Styles -->
+  <style>
+    .animate-fade-in {
+      animation: fadeIn 1.2s ease-out;
+    }
+    
+    .animate-pulse-slow {
+      animation: pulse-slow 3s ease-in-out infinite;
+    }
+    
+    @keyframes fadeIn {
+      from { 
+        opacity: 0; 
+        transform: translateY(30px) scale(0.95); 
+      }
+      to { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); 
+      }
+    }
+    
+    @keyframes pulse-slow {
+      0%, 100% { 
+        transform: scale(1);
+        filter: brightness(1);
+      }
+      50% { 
+        transform: scale(1.05);
+        filter: brightness(1.2);
+      }
+    }
+    
+    /* DNA Strand Animation */
+    .dna-strand {
+      position: absolute;
+      top: 10%;
+      left: 10%;
+      width: 4px;
+      height: 80%;
+      background: linear-gradient(45deg, #1e40af, #0ea5e9);
+      border-radius: 2px;
+      animation: dna-rotate 8s linear infinite;
+    }
+    
+    .dna-strand-2 {
+      position: absolute;
+      top: 10%;
+      right: 10%;
+      width: 4px;
+      height: 80%;
+      background: linear-gradient(-45deg, #3730a3, #1e40af);
+      border-radius: 2px;
+      animation: dna-rotate 8s linear infinite reverse;
+    }
+    
+    @keyframes dna-rotate {
+      0% { transform: rotateZ(0deg) rotateY(0deg); }
+      100% { transform: rotateZ(360deg) rotateY(360deg); }
+    }
+    
+    /* Floating Particles */
+    .particles {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: rgba(139, 92, 246, 0.6);
+      border-radius: 50%;
+      animation: float 6s ease-in-out infinite;
+    }
+    
+    .particle:nth-child(1) {
+      top: 20%;
+      left: 20%;
+      animation-delay: 0s;
+    }
+    
+    .particle:nth-child(2) {
+      top: 60%;
+      left: 80%;
+      animation-delay: 1s;
+      background: rgba(6, 182, 212, 0.6);
+    }
+    
+    .particle:nth-child(3) {
+      top: 80%;
+      left: 30%;
+      animation-delay: 2s;
+      background: rgba(236, 72, 153, 0.6);
+    }
+    
+    .particle:nth-child(4) {
+      top: 30%;
+      left: 70%;
+      animation-delay: 3s;
+    }
+    
+    .particle:nth-child(5) {
+      top: 50%;
+      left: 10%;
+      animation-delay: 4s;
+      background: rgba(6, 182, 212, 0.6);
+    }
+    
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0px) translateX(0px);
+        opacity: 0.7;
+      }
+      33% {
+        transform: translateY(-20px) translateX(10px);
+        opacity: 1;
+      }
+      66% {
+        transform: translateY(10px) translateX(-10px);
+        opacity: 0.5;
+      }
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .dna-strand, .dna-strand-2 {
+        display: none;
+      }
+    }
+  </style>
+</body>
+</html>

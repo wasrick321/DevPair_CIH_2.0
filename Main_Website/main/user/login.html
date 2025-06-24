@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Login - GenGuard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex items-center justify-center h-screen bg-gradient-to-br from-purple-100 to-pink-200">
+  <div class="bg-white p-10 rounded-lg shadow-xl w-full max-w-md">
+    <h2 class="text-2xl font-bold mb-6 text-center text-purple-700">Personal Login</h2>
+    
+    <!-- Login Form -->
+    <form id="loginForm" class="space-y-4">
+      <input type="email" id="user-email" name="email" placeholder="Email" required 
+        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+      <input type="password" id="user-password" name="password" placeholder="Password" required 
+        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+      <button type="submit" 
+        class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg font-semibold transition-colors">
+        Login
+      </button>
+    </form>
+
+    <!-- Register Section -->
+    <div class="mt-6 pt-6 border-t">
+      <h3 class="text-center text-gray-600 mb-4">New to GenGuard?</h3>
+      <form id="registerForm" class="space-y-4">
+        <input type="text" id="register-name" name="name" placeholder="Full Name" required 
+          class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <input type="email" id="register-email" name="email" placeholder="Email" required 
+          class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <input type="password" id="register-password" name="password" placeholder="Password" required 
+          class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <button type="submit" 
+          class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold transition-colors">
+          Register
+        </button>
+      </form>
+    </div>
+
+    <!-- Demo Credentials -->
+    <p class="mt-4 text-sm text-center text-gray-500">
+      Demo: user@demo.com / user123
+    </p>
+  </div>
+
+  <script>
+    // Login Form Handler
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('user-email').value;
+      const password = document.getElementById('user-password').value;
+
+      try {
+        const response = await fetch('/api/user/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Store user info in localStorage
+          localStorage.setItem('user', JSON.stringify(data.user));
+          window.location.href = '../user_site/html.html';
+        } else {
+          alert('Login failed: ' + data.error);
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    });
+
+    // Register Form Handler
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('register-name').value;
+      const email = document.getElementById('register-email').value;
+      const password = document.getElementById('register-password').value;
+
+      try {
+        const response = await fetch('/api/user/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name, email, password }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert('Registration successful! Please login.');
+          document.getElementById('registerForm').reset();
+        } else {
+          alert('Registration failed: ' + data.error);
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    });
+  </script>
+</body>
+</html>
