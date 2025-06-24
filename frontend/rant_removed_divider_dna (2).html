@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenGuard - Advanced DNA Mutation Analyzer</title>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #000000;
+            --bg-secondary: #0a0a0a;
+            --bg-glass: rgba(255, 255, 255, 0.05);
+            --accent-blue: #00BFFF;
+            --accent-purple: #C084FC;
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --border-glass: rgba(255, 255, 255, 0.1);
+            --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --gradient-radial: radial-gradient(circle at 20% 20%, rgba(0, 191, 255, 0.1) 0%, transparent 50%);
+            --gradient-accent: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            background-image: var(--gradient-radial);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Background DNA Animation Container */
+        .dna-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            background: rgba(0, 0, 0, 0.8);
+            border-bottom: 1px solid var(--border-glass);
+            padding: 1rem 0;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--gradient-accent);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+
+        .logo-text h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-text p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .status-indicators {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+            animation: blink 2s infinite;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+        }
+
+        .hero-content {
+            flex: 1;
+            max-width: 600px;
+            z-index: 10;
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 900;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple), #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        /* 3D DNA Hero Container */
+        .hero-dna-container {
+            flex: 1;
+            height: 500px;
+            position: relative;
+            margin-left: 2rem;
+        }
+
+        .hero-dna-canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 20px;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            max-width: 1400px;
+            margin: 4rem auto 2rem;
+            padding: 0 2rem;
+        }
+
+        .tabs-container {
+            display: flex;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 0.5rem;
+            overflow-x: auto;
+        }
+
+        .tab-button {
+            flex: 1;
+            min-width: 140px;
+            padding: 1rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .tab-button.active {
+            background: var(--gradient-accent);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 191, 255, 0.3);
+        }
+
+        .tab-button:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        /* Glass Cards */
+        .glass-card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--shadow-soft);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-accent);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 191, 255, 0.2);
+            border-color: rgba(0, 191, 255, 0.3);
+        }
+
+        /* Upload Zone */
+        .upload-zone {
+            border: 2px dashed var(--border-glass);
+            border-radius: 16px;
+            padding: 3rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent-blue);
+            background: rgba(0, 191, 255, 0.05);
+            transform: scale(1.02);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--accent-blue);
+            background: rgba(0, 191, 255, 0.1);
+            transform: scale(1.05);
+        }
+
+        .upload-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--gradient-accent);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-size: 0.95rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: var(--gradient-accent);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 191, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 191, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-glass);
+            color: var(--text-primary);
+            border: 1px solid var(--border-glass);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Grid Layouts */
+        .grid {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .grid-2 { grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); }
+        .grid-3 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+        .grid-4 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+
+        /* Metrics Cards */
+        .metric-card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin: 0.5rem 0;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.8rem;
+        }
+
+        .metric-high { color: #ef4444; }
+        .metric-medium { color: #f59e0b; }
+        .metric-low { color: #10b981; }
+        .metric-info { color: var(--accent-blue); }
+
+        /* Progress Bar */
+        .progress-container {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--gradient-accent);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        /* Chat Interface */
+        .chat-button {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            background: var(--gradient-accent);
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(0, 191, 255, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .chat-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(0, 191, 255, 0.5);
+        }
+
+        .chat-panel {
+            position: fixed;
+            bottom: 5rem;
+            right: 2rem;
+            width: 380px;
+            height: 500px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            box-shadow: var(--shadow-soft);
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .chat-panel.active {
+            display: flex;
+            animation: slideUp 0.3s ease;
+        }
+
+        .chat-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-glass);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            max-width: 85%;
+            animation: messageSlide 0.3s ease;
+        }
+
+        .message.user {
+            background: var(--gradient-accent);
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .message.ai {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            align-self: flex-start;
+            backdrop-filter: blur(10px);
+        }
+
+        .chat-input-container {
+            padding: 1rem;
+            border-top: 1px solid var(--border-glass);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            padding: 0.75rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        /* DNA Divider Section */
+        .dna-divider {
+            height: 200px;
+            position: relative;
+            margin: 4rem 0;
+            overflow: hidden;
+        }
+
+        .dna-divider-canvas {
+            width: 100%;
+            height: 100%;
+            opacity: 0.6;
+        }
+
+        /* Footer DNA Section */
+        .footer-dna {
+            height: 300px;
+            position: relative;
+            margin-top: 4rem;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+        }
+
+        .footer-dna-canvas {
+            width: 100%;
+            height: 100%;
+            opacity: 0.4;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes messageSlide {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 191, 255, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(0, 191, 255, 0.6); }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .hero-section {
+                flex-direction: column;
+                text-align: center;
+                min-height: auto;
+                padding: 2rem;
+            }
+            
+            .hero-dna-container {
+                margin-left: 0;
+                margin-top: 2rem;
+                height: 300px;
+            }
+            
+            .hero-title {
+                font-size: 3rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .tabs-container {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+            
+            .chat-panel {
+                width: calc(100vw - 2rem);
+                right: 1rem;
+                height: 400px;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border-glass);
+            border-radius: 50%;
+            border-top-color: var(--accent-blue);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Smooth Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-blue);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-purple);
+        }
+
+        /* File Input Hidden */
+        .file-input {
+            display: none;
+        }
+
+        /* Badge Styles */
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            display: inline-block;
+        }
+
+        .badge-primary {
+            background: rgba(0, 191, 255, 0.2);
+            color: var(--accent-blue);
+            border: 1px solid rgba(0, 191, 255, 0.3);
+        }
+
+        .badge-secondary {
+            background: rgba(192, 132, 252, 0.2);
+            color: var(--accent-purple);
+            border: 1px solid rgba(192, 132, 252, 0.3);
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        /* Data Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .data-table th {
+            background: var(--bg-glass);
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.8rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .data-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">🧬</div>
+                <div class="logo-text">
+                    <h1>GenGuard</h1>
+                    <p>Advanced DNA Analysis Platform</p>
+                </div>
+            </div>
+            <div class="status-indicators">
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span>System Online</span>
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot" style="background: #10b981;"></div>
+                    <span>AI Ready</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">Advanced DNA Mutation Analysis</h1>
+            <p class="hero-subtitle">
+                Unlock the secrets of your genetic code with our cutting-edge AI-powered analysis platform. 
+                Get comprehensive insights into mutations, risk assessments, and personalized recommendations.
+            </p>
+            <div class="hero-buttons">
+                <button class="btn btn-primary" onclick="scrollToSection('upload')">
+                    🧬 Start Analysis
+                </button>
+                <button class="btn btn-secondary">
+                    📖 Learn More
+                </button>
+            </div>
+        </div>
+        <div class="hero-dna-container">
+            <canvas id="hero-dna" class="hero-dna-canvas"></canvas>
+        </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+        <div class="tabs-container">
+            <button class="tab-button active" onclick="switchTab('upload')">
+                📤 Upload Data
+            </button>
+            <button class="tab-button" onclick="switchTab('results')">
+                📊 Results
+            </button>
+            <button class="tab-button" onclick="switchTab('charts')">
+                📈 Charts
+            </button>
+            <button class="tab-button" onclick="switchTab('baby-risk')">
+                👶 Baby Risk
+            </button>
+            <button class="tab-button" onclick="switchTab('insights')">
+                🧠 AI Insights
+            </button>
+        </div>
+    </div>
+
+    <!-- Upload Tab -->
+    <div id="upload" class="tab-content active">
+        <div style="text-align: center; margin-bottom: 3rem;">
+            <h2 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                Upload Your Genetic Data
+            </h2>
+            <p style="color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
+                Upload your mutation data and clinical variant files for comprehensive genetic analysis
+            </p>
+        </div>
+
+        <div class="grid grid-2">
+            <div class="glass-card">
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; font-size: 1.2rem;">
+                        🧪 Mutation Data
+                        <span class="badge badge-primary">CSV</span>
+                    </h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                        Upload your mutations.csv file containing gene and mutation data
+                    </p>
+                </div>
+                <div class="upload-zone" onclick="document.getElementById('mutation-file').click()">
+                    <div class="upload-icon">📤</div>
+                    <h4 style="margin-bottom: 0.5rem;">Drop mutations.csv here</h4>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">or click to browse files</p>
+                    <input type="file" id="mutation-file" class="file-input" accept=".csv" onchange="handleFileSelect(event, 'mutation')">
+                    <div id="mutation-file-info" style="display: none; margin-top: 1rem; padding: 0.75rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; color: #10b981; font-weight: 600;"></div>
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; font-size: 1.2rem;">
+                        🔬 Clinical Data
+                        <span class="badge badge-secondary">ClinVar</span>
+                    </h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                        Upload your clinvar_data.csv file with clinical significance data
+                    </p>
+                </div>
+                <div class="upload-zone" onclick="document.getElementById('clinvar-file').click()">
+                    <div class="upload-icon">🔬</div>
+                    <h4 style="margin-bottom: 0.5rem;">Drop clinvar_data.csv here</h4>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">or click to browse files</p>
+                    <input type="file" id="clinvar-file" class="file-input" accept=".csv" onchange="handleFileSelect(event, 'clinvar')">
+                    <div id="clinvar-file-info" style="display: none; margin-top: 1rem; padding: 0.75rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; color: #10b981; font-weight: 600;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 3rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <button class="btn btn-primary" id="analyze-btn" onclick="analyzeData()" disabled>
+                🔬 Analyze Mutations
+            </button>
+            <button class="btn btn-secondary" onclick="loadSampleData()">
+                ⭐ Try Sample Data
+            </button>
+        </div>
+
+        <!-- Progress Section -->
+        <div id="progress-section" style="display: none; margin-top: 3rem;">
+            <div class="glass-card">
+                <h3 style="margin-bottom: 1rem;">🧬 Analyzing Genetic Variants</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                    Processing mutations, calculating risk scores, and matching with clinical data...
+                </p>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+                </div>
+                <div style="text-align: center; margin-top: 1rem;">
+                    <span id="progress-text">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Tab -->
+    <div id="results" class="tab-content">
+        <div class="grid grid-4" style="margin-bottom: 3rem;">
+            <div class="metric-card">
+                <div class="metric-label">High Risk</div>
+                <div class="metric-value metric-high" id="high-risk-count">0</div>
+                <p style="color: var(--text-muted); font-size: 0.8rem;">Critical attention required</p>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Medium Risk</div>
+                <div class="metric-value metric-medium" id="medium-risk-count">0</div>
+                <p style="color: var(--text-muted); font-size: 0.8rem;">Monitor closely</p>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Low Risk</div>
+                <div class="metric-value metric-low" id="low-risk-count">0</div>
+                <p style="color: var(--text-muted); font-size: 0.8rem;">Routine follow-up</p>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Total Analyzed</div>
+                <div class="metric-value metric-info" id="total-count">0</div>
+                <p style="color: var(--text-muted); font-size: 0.8rem;">Variants processed</p>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <h3 style="margin-bottom: 1rem;">🧪 Mutation Analysis Results</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                Comprehensive analysis of genetic variants with risk assessment
+            </p>
+            <div style="overflow-x: auto;">
+                <table class="data-table" id="results-table">
+                    <thead>
+                        <tr>
+                            <th>Gene</th>
+                            <th>Mutation</th>
+                            <th>Disease</th>
+                            <th>Risk Score</th>
+                            <th>Clinical Significance</th>
+                            <th>Confidence</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-tbody">
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                                No data available. Please upload files and run analysis.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Tab -->
+    <div id="charts" class="tab-content">
+        <div style="text-align: center; margin-bottom: 3rem;">
+            <h2 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                Advanced Genetic Analytics
+            </h2>
+            <p style="color: var(--text-secondary); font-size: 1.1rem; max-width: 700px; margin: 0 auto;">
+                Comprehensive visualization and analysis of DNA mutations with AI-powered insights
+            </p>
+        </div>
+
+        <div id="charts-empty-state" class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            <h3 class="empty-state-title">No Data Available</h3>
+            <p style="max-width: 400px; margin-bottom: 2rem;">
+                Upload your genetic data files and run the analysis to see comprehensive charts and visualizations.
+            </p>
+            <button class="btn btn-primary" onclick="switchTab('upload')">
+                📤 Upload Data
+            </button>
+        </div>
+    </div>
+
+    <!-- Baby Risk Tab -->
+    <div id="baby-risk" class="tab-content">
+        <div style="text-align: center; margin-bottom: 3rem;">
+            <h2 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; background: linear-gradient(135deg, #ff6b9d, var(--accent-purple), var(--accent-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                Baby Genetic Risk Predictor
+            </h2>
+            <p style="color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
+                Upload mutation data for both parents to predict potential genetic risks for your future baby
+            </p>
+        </div>
+
+        <div class="grid grid-2">
+            <div class="glass-card">
+                <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                    👩 Mother's Genetic Data
+                    <span class="badge badge-danger">CSV</span>
+                </h3>
+                <div class="upload-zone">
+                    <div class="upload-icon">👩</div>
+                    <h4 style="margin-bottom: 0.5rem;">Drop mother's mutations.csv here</h4>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">or click to browse files</p>
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <h3 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                    👨 Father's Genetic Data
+                    <span class="badge badge-primary">CSV</span>
+                </h3>
+                <div class="upload-zone">
+                    <div class="upload-icon">👨</div>
+                    <h4 style="margin-bottom: 0.5rem;">Drop father's mutations.csv here</h4>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">or click to browse files</p>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 3rem;">
+            <button class="btn btn-primary" disabled>
+                🧬 Predict Baby's Risk
+            </button>
+        </div>
+    </div>
+
+    <!-- AI Insights Tab -->
+    <div id="insights" class="tab-content">
+        <div style="text-align: center; margin-bottom: 3rem;">
+            <h2 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; background: linear-gradient(135deg, #10b981, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                AI-Powered Insights
+            </h2>
+            <p style="color: var(--text-secondary); font-size: 1.1rem;">
+                Advanced machine learning analysis of your genetic data
+            </p>
+        </div>
+
+        <div class="grid grid-2">
+            <div class="glass-card">
+                <h3 style="margin-bottom: 1rem;">⚠️ High Priority Findings</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem;">
+                    Critical mutations requiring immediate attention
+                </p>
+                <div id="high-priority-findings">
+                    <div style="text-align: center; padding: 2rem; color: #10b981;">
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">✅</div>
+                        <h4 style="color: #10b981; margin-bottom: 0.5rem;">No High-Risk Mutations Detected</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">Your genetic profile shows favorable results</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <h3 style="margin-bottom: 1rem;">💡 AI Recommendations</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem;">
+                    Personalized recommendations based on your genetic profile
+                </p>
+                <div id="ai-recommendations">
+                    <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 1.5rem;">
+                        <h4 style="color: #10b981; margin-bottom: 1rem; font-weight: 600;">Clinical Actions</h4>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="color: var(--accent-blue);">•</span>
+                                Continue routine monitoring
+                            </li>
+                            <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="color: var(--accent-purple);">•</span>
+                                Enhanced screening protocols suggested
+                            </li>
+                            <li style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="color: #f59e0b;">•</span>
+                                Family history evaluation advised
+                            </li>
+                            <li style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="color: #10b981;">•</span>
+                                Consider precision medicine approaches
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer DNA Section -->
+    <div class="footer-dna">
+        <canvas id="footer-dna" class="footer-dna-canvas"></canvas>
+    </div>
+
+    <!-- Chat Interface -->
+    <button class="chat-button" onclick="toggleChat()">💬</button>
+    <div class="chat-panel" id="chat-panel">
+        <div class="chat-header">
+            <div style="width: 40px; height: 40px; background: var(--gradient-accent); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                🧠
+            </div>
+            <div>
+                <h4 style="margin: 0; font-weight: 600;">AI Genetics Assistant</h4>
+                <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary);">Advanced genomic analysis support</p>
+            </div>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="message ai">
+                <p>Welcome to GenGuard! I'm your AI genetics specialist. Upload your data files to begin comprehensive analysis. How can I assist you today?</p>
+            </div>
+        </div>
+        <div class="chat-input-container">
+            <input type="text" id="chat-input" class="chat-input" placeholder="Ask about your genetic analysis..." onkeypress="handleChatKeyPress(event)">
+            <button class="btn btn-primary" onclick="sendMessage()" style="padding: 0.75rem;">➤</button>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_KEY = 'AIzaSyAr0RiT4gA2muZuZkj85eT-_cG6cUELaxU';
+        const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
+
+        // Global variables
+        let analysisResults = [];
+        let uploadedFiles = {
+            mutation: null,
+            clinvar: null
+        };
+        let dnaScenes = {};
+
+        // Initialize 3D DNA animations
+        function initDNAAnimations() {// Hero DNA
+            initHeroDNA();// Footer DNA
+            initFooterDNA();
+        }
+
+        function initBackgroundDNA() {
+            const canvas = document.getElementById('background-dna');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000, 0);
+
+            // Create DNA helix
+            const helixGroup = new THREE.Group();
+            const helixGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+            
+            for (let i = 0; i < 200; i++) {
+                const angle = (i / 200) * Math.PI * 8;
+                const radius = 2;
+                const height = i * 0.1 - 10;
+                
+                // First strand
+                const material1 = new THREE.MeshBasicMaterial({ color: 0x00BFFF });
+                const sphere1 = new THREE.Mesh(helixGeometry, material1);
+                sphere1.position.set(
+                    Math.cos(angle) * radius,
+                    height,
+                    Math.sin(angle) * radius
+                );
+                helixGroup.add(sphere1);
+                
+                // Second strand
+                const material2 = new THREE.MeshBasicMaterial({ color: 0xC084FC });
+                const sphere2 = new THREE.Mesh(helixGeometry, material2);
+                sphere2.position.set(
+                    Math.cos(angle + Math.PI) * radius,
+                    height,
+                    Math.sin(angle + Math.PI) * radius
+                );
+                helixGroup.add(sphere2);
+                
+                // Connecting lines
+                if (i % 10 === 0) {
+                    const lineGeometry = new THREE.BufferGeometry().setFromPoints([
+                        sphere1.position,
+                        sphere2.position
+                    ]);
+                    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x444444 });
+                    const line = new THREE.Line(lineGeometry, lineMaterial);
+                    helixGroup.add(line);
+                }
+            }
+            
+            scene.add(helixGroup);
+            camera.position.z = 10;
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                helixGroup.rotation.y += 0.005;
+                helixGroup.rotation.x += 0.002;
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            dnaScenes.background = { scene, camera, renderer, helixGroup };
+        }
+
+        function initHeroDNA() {
+            const canvas = document.getElementById('hero-dna');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
+            
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            renderer.setClearColor(0x000000, 0);
+
+            // Create larger, more detailed DNA helix
+            const helixGroup = new THREE.Group();
+            const helixGeometry = new THREE.SphereGeometry(0.15, 12, 12);
+            
+            for (let i = 0; i < 150; i++) {
+                const angle = (i / 150) * Math.PI * 6;
+                const radius = 3;
+                const height = i * 0.15 - 11;
+                
+                // First strand with glow effect
+                const material1 = new THREE.MeshBasicMaterial({ 
+                    color: 0x00BFFF,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                const sphere1 = new THREE.Mesh(helixGeometry, material1);
+                sphere1.position.set(
+                    Math.cos(angle) * radius,
+                    height,
+                    Math.sin(angle) * radius
+                );
+                helixGroup.add(sphere1);
+                
+                // Second strand
+                const material2 = new THREE.MeshBasicMaterial({ 
+                    color: 0xC084FC,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                const sphere2 = new THREE.Mesh(helixGeometry, material2);
+                sphere2.position.set(
+                    Math.cos(angle + Math.PI) * radius,
+                    height,
+                    Math.sin(angle + Math.PI) * radius
+                );
+                helixGroup.add(sphere2);
+                
+                // Enhanced connecting lines
+                if (i % 8 === 0) {
+                    const lineGeometry = new THREE.BufferGeometry().setFromPoints([
+                        sphere1.position,
+                        sphere2.position
+                    ]);
+                    const lineMaterial = new THREE.LineBasicMaterial({ 
+                        color: 0x666666,
+                        transparent: true,
+                        opacity: 0.6
+                    });
+                    const line = new THREE.Line(lineGeometry, lineMaterial);
+                    helixGroup.add(line);
+                }
+            }
+            
+            scene.add(helixGroup);
+            camera.position.z = 12;
+            camera.position.y = 2;
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                helixGroup.rotation.y += 0.008;
+                helixGroup.rotation.x = Math.sin(Date.now() * 0.001) * 0.1;
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            dnaScenes.hero = { scene, camera, renderer, helixGroup };
+        }
+
+        function initDividerDNA() {
+            const canvas = document.getElementById('divider-dna');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
+            
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            renderer.setClearColor(0x000000, 0);
+
+            // Create horizontal DNA strand
+            const helixGroup = new THREE.Group();
+            const helixGeometry = new THREE.SphereGeometry(0.08, 8, 8);
+            
+            for (let i = 0; i < 100; i++) {
+                const angle = (i / 100) * Math.PI * 4;
+                const radius = 1.5;
+                const width = i * 0.2 - 10;
+                
+                const material1 = new THREE.MeshBasicMaterial({ color: 0x00BFFF });
+                const sphere1 = new THREE.Mesh(helixGeometry, material1);
+                sphere1.position.set(
+                    width,
+                    Math.cos(angle) * radius,
+                    Math.sin(angle) * radius
+                );
+                helixGroup.add(sphere1);
+                
+                const material2 = new THREE.MeshBasicMaterial({ color: 0xC084FC });
+                const sphere2 = new THREE.Mesh(helixGeometry, material2);
+                sphere2.position.set(
+                    width,
+                    Math.cos(angle + Math.PI) * radius,
+                    Math.sin(angle + Math.PI) * radius
+                );
+                helixGroup.add(sphere2);
+            }
+            
+            scene.add(helixGroup);
+            camera.position.z = 8;
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                helixGroup.rotation.x += 0.01;
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            dnaScenes.divider = { scene, camera, renderer, helixGroup };
+        }
+
+        function initFooterDNA() {
+            const canvas = document.getElementById('footer-dna');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
+            
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            renderer.setClearColor(0x000000, 0);
+
+            // Remove all DNA helix rendering at the bottom
+            // (No helixGroup or animation code here)
+
+            camera.position.z = 10;
+            camera.position.y = 2;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                renderer.render(scene, camera);
+            }
+
+            animate();
+            dnaScenes.footer = { scene, camera, renderer };
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab-button').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // File handling
+        function handleFileSelect(event, type) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+                alert('Please select a CSV file');
+                return;
+            }
+
+            uploadedFiles[type] = file;
+            
+            const fileInfo = document.getElementById(`${type}-file-info`);
+            fileInfo.style.display = 'block';
+            fileInfo.innerHTML = `✅ ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+            
+            checkAnalyzeButton();
+        }
+
+        function checkAnalyzeButton() {
+            const analyzeBtn = document.getElementById('analyze-btn');
+            if (uploadedFiles.mutation && uploadedFiles.clinvar) {
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        // Sample data
+        const sampleMutationData = [
+            { Gene: "BRCA1", Mutation: "c.68_69delAG" },
+            { Gene: "TP53", Mutation: "c.524G>A" },
+            { Gene: "KRAS", Mutation: "c.35G>A" },
+            { Gene: "EGFR", Mutation: "c.2573T>G" },
+            { Gene: "PIK3CA", Mutation: "c.3140A>G" }
+        ];
+
+        const sampleClinvarData = [
+            { Gene: "BRCA1", Mutation: "c.68_69delAG", Disease: "Hereditary Breast and Ovarian Cancer", ClinicalSignificance: "Pathogenic" },
+            { Gene: "TP53", Mutation: "c.524G>A", Disease: "Li-Fraumeni Syndrome", ClinicalSignificance: "Pathogenic" },
+            { Gene: "KRAS", Mutation: "c.35G>A", Disease: "Colorectal Cancer", ClinicalSignificance: "Likely Pathogenic" },
+            { Gene: "EGFR", Mutation: "c.2573T>G", Disease: "Non-Small Cell Lung Cancer", ClinicalSignificance: "Uncertain Significance" },
+            { Gene: "PIK3CA", Mutation: "c.3140A>G", Disease: "Breast Cancer", ClinicalSignificance: "Likely Pathogenic" }
+        ];
+
+        function loadSampleData() {
+            processData(sampleMutationData, sampleClinvarData);
+            switchTab('results');
+        }
+
+        function analyzeData() {
+            if (!uploadedFiles.mutation || !uploadedFiles.clinvar) {
+                alert('Please upload both mutation and clinical data files');
+                return;
+            }
+
+            document.getElementById('progress-section').style.display = 'block';
+            
+            let progress = 0;
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 100) progress = 100;
+                
+                progressBar.style.width = progress + '%';
+                progressText.textContent = Math.round(progress) + '%';
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        document.getElementById('progress-section').style.display = 'none';
+                        processData(sampleMutationData, sampleClinvarData);
+                        switchTab('results');
+                    }, 1000);
+                }
+            }, 200);
+        }
+
+        function processData(mutationData, clinvarData) {
+            analysisResults = [];
+            
+            mutationData.forEach((entry, index) => {
+                const gene = entry.Gene?.trim();
+                const mutation = entry.Mutation?.trim();
+                
+                if (!gene || !mutation) return;
+                
+                const match = clinvarData.find(row => 
+                    row.Gene?.trim() === gene && row.Mutation?.trim() === mutation
+                );
+                
+                let disease = "Predicted Condition";
+                let clinicalSignificance = "Unknown";
+                let isMatch = false;
+                
+                if (match && match.Disease) {
+                    disease = match.Disease.trim();
+                    clinicalSignificance = match.ClinicalSignificance || "Unknown";
+                    isMatch = true;
+                }
+                
+                const riskScore = computeRiskScore(gene, mutation, isMatch);
+                const category = riskScore >= 75 ? "High" : riskScore >= 40 ? "Medium" : "Low";
+                
+                const result = {
+                    id: `mut_${index + 1}`,
+                    gene,
+                    mutation,
+                    disease,
+                    riskScore,
+                    category,
+                    isMatch,
+                    clinicalSignificance,
+                    confidence: isMatch ? Math.min(95, riskScore + 10) : Math.max(60, riskScore - 10)
+                };
+                
+                analysisResults.push(result);
+            });
+            
+            updateResults();
+        }
+
+        function computeRiskScore(gene, mutation, isMatch) {
+            let score = 0;
+            if (isMatch) score += 60;
+            if (mutation.includes("del")) score += 20;
+            if (mutation.includes(">")) score += 10;
+            if (["BRCA1", "TP53", "KRAS"].includes(gene)) score += 20;
+            return Math.min(score, 100);
+        }
+
+        function updateResults() {
+            const riskCounts = {
+                High: analysisResults.filter(r => r.category === "High").length,
+                Medium: analysisResults.filter(r => r.category === "Medium").length,
+                Low: analysisResults.filter(r => r.category === "Low").length
+            };
+            
+            document.getElementById('high-risk-count').textContent = riskCounts.High;
+            document.getElementById('medium-risk-count').textContent = riskCounts.Medium;
+            document.getElementById('low-risk-count').textContent = riskCounts.Low;
+            document.getElementById('total-count').textContent = analysisResults.length;
+            
+            const tbody = document.getElementById('results-tbody');
+            tbody.innerHTML = '';
+            
+            analysisResults.forEach(result => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><span class="badge badge-primary">${result.gene}</span></td>
+                    <td><code style="background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">${result.mutation}</code></td>
+                    <td>
+                        <div style="font-weight: 600;">${result.disease}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">ClinVar Match</div>
+                    </td>
+                    <td>
+                        <div class="progress-container" style="margin: 0.5rem 0;">
+                            <div class="progress-bar" style="width: ${result.riskScore}%; background: ${result.category === 'High' ? '#ef4444' : result.category === 'Medium' ? '#f59e0b' : '#10b981'}"></div>
+                        </div>
+                        <span style="font-weight: 600; color: ${result.category === 'High' ? '#ef4444' : result.category === 'Medium' ? '#f59e0b' : '#10b981'}">
+                            ${result.riskScore}%
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge ${result.clinicalSignificance === 'Pathogenic' ? 'badge-danger' : result.clinicalSignificance === 'Likely Pathogenic' ? 'badge-warning' : 'badge-secondary'}">
+                            ${result.clinicalSignificance}
+                        </span>
+                    </td>
+                    <td style="font-weight: 600;">${result.confidence}%</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Chat functionality
+        function toggleChat() {
+            const chatPanel = document.getElementById('chat-panel');
+            chatPanel.classList.toggle('active');
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            const messagesContainer = document.getElementById('chat-messages');
+            
+            const userMessage = document.createElement('div');
+            userMessage.className = 'message user';
+            userMessage.innerHTML = `<p>${message}</p>`;
+            messagesContainer.appendChild(userMessage);
+            
+            input.value = '';
+            
+            // Show loading
+            const loadingMessage = document.createElement('div');
+            loadingMessage.className = 'message ai';
+            loadingMessage.innerHTML = '<div class="loading"></div>';
+            messagesContainer.appendChild(loadingMessage);
+            
+            try {
+                const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `You are a genetics specialist AI assistant for GenGuard, a DNA mutation analysis platform. 
+                                Context: The user is working with genetic data analysis, mutation risk assessment, and clinical significance evaluation.
+                                Current analysis results: ${analysisResults.length} mutations analyzed.
+                                User question: ${message}
+                                
+                                Please provide a helpful, professional response focused on genetics, DNA analysis, and clinical interpretation. Keep responses concise but informative.`
+                            }]
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 
+                    "I apologize, but I encountered an issue processing your request. Please try again.";
+                
+                loadingMessage.innerHTML = `<p>${aiResponse}</p>`;
+            } catch (error) {
+                console.error('Error calling Gemini API:', error);
+                loadingMessage.innerHTML = '<p>I\'m currently experiencing technical difficulties. Please try again in a moment.</p>';
+            }
+            
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // Utility functions
+        function scrollToSection(sectionId) {
+            document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Handle window resize for 3D scenes
+        function handleResize() {
+            Object.values(dnaScenes).forEach(scene => {
+                if (scene.camera && scene.renderer) {
+                    const canvas = scene.renderer.domElement;
+                    const width = canvas.clientWidth;
+                    const height = canvas.clientHeight;
+                    
+                    scene.camera.aspect = width / height;
+                    scene.camera.updateProjectionMatrix();
+                    scene.renderer.setSize(width, height);
+                }
+            });
+        }
+
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initDNAAnimations();
+            
+            // Setup drag and drop
+            ['mutation', 'clinvar'].forEach(type => {
+                const uploadZone = document.querySelector(`#${type === 'mutation' ? 'upload' : 'upload'} .upload-zone`);
+                if (uploadZone) {
+                    uploadZone.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        uploadZone.classList.add('dragover');
+                    });
+                    
+                    uploadZone.addEventListener('dragleave', (e) => {
+                        e.preventDefault();
+                        uploadZone.classList.remove('dragover');
+                    });
+                    
+                    uploadZone.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        uploadZone.classList.remove('dragover');
+                        
+                        const files = e.dataTransfer.files;
+                        if (files.length > 0) {
+                            const file = files[0];
+                            if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+                                uploadedFiles[type] = file;
+                                
+                                const fileInfo = document.getElementById(`${type}-file-info`);
+                                fileInfo.style.display = 'block';
+                                fileInfo.innerHTML = `✅ ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+                                
+                                checkAnalyzeButton();
+                            } else {
+                                alert('Please drop a CSV file');
+                            }
+                        }
+                    });
+                }
+            });
+            
+            console.log('GenGuard initialized with 3D DNA animations');
+        });
+
+        window.addEventListener('resize', handleResize);
+    </script>
+</body>
+</html>
